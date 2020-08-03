@@ -1,0 +1,48 @@
+swagger: "2.0"
+info:
+  description: "This is the public API of the Zerberus authorization server."
+  version: "0.1.0"
+  title: "Zerberus"
+  termsOfService: "TBD"
+  contact:
+    email: "eldelto77@gmail.com"
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+host: "TBD"
+basePath: "/v1"
+tags:
+- name: "pet"
+  description: "Everything about your Pets"
+  externalDocs:
+    description: "Find out more"
+    url: "http://swagger.io"
+- name: "store"
+  description: "Access to Petstore orders"
+- name: "user"
+  description: "Operations about user"
+  externalDocs:
+    description: "Find out more about our store"
+    url: "http://swagger.io"
+schemes:
+- "https"
+- "http"
+paths:
+  /oauth2/login:
+    get:
+      tags:
+      - "pet"
+      summary: "Add a new pet to the store"
+      description: ""
+      operationId: "addPet"
+      produces:
+      - "text/html"
+      parameters:
+      - in: "query"
+        name: "response_type"
+        type: "string"
+        description: "The expected response type (currently only code is supported)"
+        required: true
+      responses:
+        "200":
+          description: "The login page"

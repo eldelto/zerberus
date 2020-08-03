@@ -1,0 +1,15 @@
+# Ignore all
+*
+
+# Unignore all with extensions
+!*.*
+
+# Unignore all dirs
+!*/
+
+# Unignore Dockerfile
+!Dockerfile
+
+# Ignore built Docker images
+docker_images
+
