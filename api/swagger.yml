@@ -55,7 +55,7 @@ paths:
         description: "Opage value that will be returned unmodified after the redirect."
         required: true
       produces:
-      - "application/x-www-form-urlencoded"
+      - "text/html"
       responses:
         "200":
           description: "The authorization page"
