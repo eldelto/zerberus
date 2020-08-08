@@ -12,37 +12,105 @@ info:
 host: "TBD"
 basePath: "/v1"
 tags:
-- name: "pet"
-  description: "Everything about your Pets"
-  externalDocs:
-    description: "Find out more"
-    url: "http://swagger.io"
-- name: "store"
-  description: "Access to Petstore orders"
-- name: "user"
-  description: "Operations about user"
-  externalDocs:
-    description: "Find out more about our store"
-    url: "http://swagger.io"
+- name: "OAuth2"
+  description: "OAuth2 related endpoints"
 schemes:
-- "https"
 - "http"
+
+securityDefinitions:
+- basicAuth:
+  type: "basic"
+
 paths:
-  /oauth2/login:
+  /authorize:
     get:
       tags:
-      - "pet"
-      summary: "Add a new pet to the store"
-      description: ""
-      operationId: "addPet"
-      produces:
-      - "text/html"
+      - "OAuth2"
+      summary: "Authorization endpoint"
+      description: "Entrypoint for most OAuth2 flows (currently only the code grant flow is supported)."
+      operationId: "authorize"
       parameters:
       - in: "query"
         name: "response_type"
         type: "string"
-        description: "The expected response type (currently only code is supported)"
+        description: "The expected response type (currently only code is supported)."
         required: true
+      - in: "query"
+        name: "client_id"
+        type: "string"
+        description: "The unique identifier of the client that has been registered with the auth server."
+        required: true
+      - in: "query"
+        name: "redirect_uri"
+        type: "string"
+        description: "The URI the client will be redirected to after a successful authorization (has to bee the same URI that has been registered with the auth server)."
+        required: true
+      - in: "query"
+        name: "scope"
+        type: "string"
+        description: "Comma-separated list of scopes the client wants to request."
+      - in: "query"
+        name: "state"
+        type: "string"
+        description: "Opage value that will be returned unmodified after the redirect."
+        required: true
+      produces:
+      - "text/html"
       responses:
         "200":
-          description: "The login page"
+          description: "The authorization page"
+  /token:
+    post:
+      tags:
+      - "OAuth2"
+      summary: "Token endpoint"
+      description: "Endpoint to exchange an authorization code for an access token."
+      operationId: "token"
+      security:
+      - basicAuth: []
+      accepts:
+      - "application/x-www-form-urlencoded" 
+      parameters:
+      - in: "query"
+        name: "grant_type"
+        type: "string"
+        description: "The requested grant type (currently only authorization_code is supported)."
+        required: true
+      - in: "query"
+        name: "code"
+        type: "string"
+        description: "The authorization code that has been obtained from the authorization server."
+        required: true
+      - in: "query"
+        name: "redirect_uri"
+        type: "string"
+        description: "The URI the client will be redirected to after a successful authorization (has to bee the same URI that has been registered with the auth server)."
+        required: true
+      produces:
+      - "application/json"
+      responses:
+        "200":
+          description: "Successful token response."
+          schema:
+            type: "object"
+            properties:
+              access_token:
+                type: "string"
+                description: "The generated access token."
+                required: true
+                example: "123-123-123-123"
+              token_type:
+                type: "string"
+                description: "The type of the returned token."
+                required: true
+                example: "Bearer"
+              expires_in:
+                type: "integer"
+                description: "The lifetime of the token in seconds."
+                required: true
+                example: 3600
+              refresh_token:
+                type: "string"
+                description: "The optional refresh token."
+                example: "456-456-456-456"
+  
