@@ -12,7 +12,7 @@ import (
 	"github.com/go-openapi/runtime/middleware"
 
 	"github.com/eldelto/zerberus/restapi/operations"
-	"github.com/eldelto/zerberus/restapi/operations/pet"
+	"github.com/eldelto/zerberus/restapi/operations/o_auth2"
 )
 
 //go:generate swagger generate server --target ../../zerberus --name Zerberus --spec ../api/swagger.yml --principal interface{}
@@ -35,15 +35,21 @@ func configureAPI(api *operations.ZerberusAPI) http.Handler {
 	// To continue using redoc as your UI, uncomment the following line
 	// api.UseRedoc()
 
-	api.JSONConsumer = runtime.JSONConsumer()
+	api.UrlformConsumer = runtime.DiscardConsumer
 
 	api.HTMLProducer = runtime.ProducerFunc(func(w io.Writer, data interface{}) error {
 		return errors.NotImplemented("html producer has not yet been implemented")
 	})
+	api.JSONProducer = runtime.JSONProducer()
 
-	if api.PetAddPetHandler == nil {
-		api.PetAddPetHandler = pet.AddPetHandlerFunc(func(params pet.AddPetParams) middleware.Responder {
-			return middleware.NotImplemented("operation pet.AddPet has not yet been implemented")
+	if api.OAuth2AuthorizeHandler == nil {
+		api.OAuth2AuthorizeHandler = o_auth2.AuthorizeHandlerFunc(func(params o_auth2.AuthorizeParams) middleware.Responder {
+			return middleware.NotImplemented("operation o_auth2.Authorize has not yet been implemented")
+		})
+	}
+	if api.OAuth2TokenHandler == nil {
+		api.OAuth2TokenHandler = o_auth2.TokenHandlerFunc(func(params o_auth2.TokenParams, principal interface{}) middleware.Responder {
+			return middleware.NotImplemented("operation o_auth2.Token has not yet been implemented")
 		})
 	}
 

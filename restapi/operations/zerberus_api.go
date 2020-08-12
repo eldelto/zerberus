@@ -20,7 +20,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 
-	"github.com/eldelto/zerberus/restapi/operations/pet"
+	"github.com/eldelto/zerberus/restapi/operations/o_auth2"
 )
 
 // NewZerberusAPI creates a new Zerberus instance
@@ -41,14 +41,18 @@ func NewZerberusAPI(spec *loads.Document) *ZerberusAPI {
 		APIKeyAuthenticator: security.APIKeyAuth,
 		BearerAuthenticator: security.BearerAuth,
 
-		JSONConsumer: runtime.JSONConsumer(),
+		UrlformConsumer: runtime.DiscardConsumer,
 
 		HTMLProducer: runtime.ProducerFunc(func(w io.Writer, data interface{}) error {
 			return errors.NotImplemented("html producer has not yet been implemented")
 		}),
+		JSONProducer: runtime.JSONProducer(),
 
-		PetAddPetHandler: pet.AddPetHandlerFunc(func(params pet.AddPetParams) middleware.Responder {
-			return middleware.NotImplemented("operation pet.AddPet has not yet been implemented")
+		OAuth2AuthorizeHandler: o_auth2.AuthorizeHandlerFunc(func(params o_auth2.AuthorizeParams) middleware.Responder {
+			return middleware.NotImplemented("operation o_auth2.Authorize has not yet been implemented")
+		}),
+		OAuth2TokenHandler: o_auth2.TokenHandlerFunc(func(params o_auth2.TokenParams, principal interface{}) middleware.Responder {
+			return middleware.NotImplemented("operation o_auth2.Token has not yet been implemented")
 		}),
 	}
 }
@@ -76,16 +80,21 @@ type ZerberusAPI struct {
 	// It has a default implementation in the security package, however you can replace it for your particular usage.
 	BearerAuthenticator func(string, security.ScopedTokenAuthentication) runtime.Authenticator
 
-	// JSONConsumer registers a consumer for the following mime types:
-	//   - application/json
-	JSONConsumer runtime.Consumer
+	// UrlformConsumer registers a consumer for the following mime types:
+	//   - application/x-www-form-urlencoded
+	UrlformConsumer runtime.Consumer
 
 	// HTMLProducer registers a producer for the following mime types:
 	//   - text/html
 	HTMLProducer runtime.Producer
+	// JSONProducer registers a producer for the following mime types:
+	//   - application/json
+	JSONProducer runtime.Producer
 
-	// PetAddPetHandler sets the operation handler for the add pet operation
-	PetAddPetHandler pet.AddPetHandler
+	// OAuth2AuthorizeHandler sets the operation handler for the authorize operation
+	OAuth2AuthorizeHandler o_auth2.AuthorizeHandler
+	// OAuth2TokenHandler sets the operation handler for the token operation
+	OAuth2TokenHandler o_auth2.TokenHandler
 	// ServeError is called when an error is received, there is a default handler
 	// but you can set your own with this
 	ServeError func(http.ResponseWriter, *http.Request, error)
@@ -154,16 +163,22 @@ func (o *ZerberusAPI) RegisterFormat(name string, format strfmt.Format, validato
 func (o *ZerberusAPI) Validate() error {
 	var unregistered []string
 
-	if o.JSONConsumer == nil {
-		unregistered = append(unregistered, "JSONConsumer")
+	if o.UrlformConsumer == nil {
+		unregistered = append(unregistered, "UrlformConsumer")
 	}
 
 	if o.HTMLProducer == nil {
 		unregistered = append(unregistered, "HTMLProducer")
 	}
+	if o.JSONProducer == nil {
+		unregistered = append(unregistered, "JSONProducer")
+	}
 
-	if o.PetAddPetHandler == nil {
-		unregistered = append(unregistered, "pet.AddPetHandler")
+	if o.OAuth2AuthorizeHandler == nil {
+		unregistered = append(unregistered, "o_auth2.AuthorizeHandler")
+	}
+	if o.OAuth2TokenHandler == nil {
+		unregistered = append(unregistered, "o_auth2.TokenHandler")
 	}
 
 	if len(unregistered) > 0 {
@@ -194,8 +209,8 @@ func (o *ZerberusAPI) ConsumersFor(mediaTypes []string) map[string]runtime.Consu
 	result := make(map[string]runtime.Consumer, len(mediaTypes))
 	for _, mt := range mediaTypes {
 		switch mt {
-		case "application/json":
-			result["application/json"] = o.JSONConsumer
+		case "application/x-www-form-urlencoded":
+			result["application/x-www-form-urlencoded"] = o.UrlformConsumer
 		}
 
 		if c, ok := o.customConsumers[mt]; ok {
@@ -213,6 +228,8 @@ func (o *ZerberusAPI) ProducersFor(mediaTypes []string) map[string]runtime.Produ
 		switch mt {
 		case "text/html":
 			result["text/html"] = o.HTMLProducer
+		case "application/json":
+			result["application/json"] = o.JSONProducer
 		}
 
 		if p, ok := o.customProducers[mt]; ok {
@@ -256,7 +273,11 @@ func (o *ZerberusAPI) initHandlerCache() {
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
-	o.handlers["GET"]["/oauth2/login"] = pet.NewAddPet(o.context, o.PetAddPetHandler)
+	o.handlers["GET"]["/authorize"] = o_auth2.NewAuthorize(o.context, o.OAuth2AuthorizeHandler)
+	if o.handlers["POST"] == nil {
+		o.handlers["POST"] = make(map[string]http.Handler)
+	}
+	o.handlers["POST"]["/token"] = o_auth2.NewToken(o.context, o.OAuth2TokenHandler)
 }
 
 // Serve creates a http handler to serve the API over HTTP

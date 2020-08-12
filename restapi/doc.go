@@ -7,7 +7,6 @@
 //    TBD
 //  Schemes:
 //    http
-//    https
 //  Host: TBD
 //  BasePath: /v1
 //  Version: 0.1.0
@@ -15,10 +14,11 @@
 //  Contact: <eldelto77@gmail.com>
 //
 //  Consumes:
-//    - application/json
+//    - application/x-www-form-urlencoded
 //
 //  Produces:
 //    - text/html
+//    - application/json
 //
 // swagger:meta
 package restapi

@@ -18,8 +18,8 @@ schemes:
 - "http"
 
 securityDefinitions:
-- basicAuth:
-  type: "basic"
+  BasicAuth:
+    type: "basic"
 
 paths:
   /authorize:
@@ -68,7 +68,7 @@ paths:
       operationId: "token"
       security:
       - basicAuth: []
-      accepts:
+      consumes:
       - "application/x-www-form-urlencoded" 
       parameters:
       - in: "query"
@@ -97,20 +97,21 @@ paths:
               access_token:
                 type: "string"
                 description: "The generated access token."
-                required: true
                 example: "123-123-123-123"
               token_type:
                 type: "string"
                 description: "The type of the returned token."
-                required: true
                 example: "Bearer"
               expires_in:
                 type: "integer"
                 description: "The lifetime of the token in seconds."
-                required: true
                 example: 3600
               refresh_token:
                 type: "string"
                 description: "The optional refresh token."
                 example: "456-456-456-456"
+            required:
+            - "access_token"
+            - "token_type"
+            - "expires_in"
   

@@ -19,7 +19,6 @@ var (
 func init() {
 	SwaggerJSON = json.RawMessage([]byte(`{
   "schemes": [
-    "https",
     "http"
   ],
   "swagger": "2.0",
@@ -39,59 +38,154 @@ func init() {
   "host": "TBD",
   "basePath": "/v1",
   "paths": {
-    "/oauth2/login": {
+    "/authorize": {
       "get": {
+        "description": "Entrypoint for most OAuth2 flows (currently only the code grant flow is supported).",
         "produces": [
           "text/html"
         ],
         "tags": [
-          "pet"
+          "OAuth2"
         ],
-        "summary": "Add a new pet to the store",
-        "operationId": "addPet",
+        "summary": "Authorization endpoint",
+        "operationId": "authorize",
         "parameters": [
           {
             "type": "string",
-            "description": "The expected response type (currently only code is supported)",
+            "description": "The expected response type (currently only code is supported).",
             "name": "response_type",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "The unique identifier of the client that has been registered with the auth server.",
+            "name": "client_id",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "The URI the client will be redirected to after a successful authorization (has to bee the same URI that has been registered with the auth server).",
+            "name": "redirect_uri",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "Comma-separated list of scopes the client wants to request.",
+            "name": "scope",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Opage value that will be returned unmodified after the redirect.",
+            "name": "state",
             "in": "query",
             "required": true
           }
         ],
         "responses": {
           "200": {
-            "description": "The login page"
+            "description": "The authorization page"
+          }
+        }
+      }
+    },
+    "/token": {
+      "post": {
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "description": "Endpoint to exchange an authorization code for an access token.",
+        "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "OAuth2"
+        ],
+        "summary": "Token endpoint",
+        "operationId": "token",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The requested grant type (currently only authorization_code is supported).",
+            "name": "grant_type",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "The authorization code that has been obtained from the authorization server.",
+            "name": "code",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "The URI the client will be redirected to after a successful authorization (has to bee the same URI that has been registered with the auth server).",
+            "name": "redirect_uri",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful token response.",
+            "schema": {
+              "type": "object",
+              "required": [
+                "access_token",
+                "token_type",
+                "expires_in"
+              ],
+              "properties": {
+                "access_token": {
+                  "description": "The generated access token.",
+                  "type": "string",
+                  "example": "123-123-123-123"
+                },
+                "expires_in": {
+                  "description": "The lifetime of the token in seconds.",
+                  "type": "integer",
+                  "example": 3600
+                },
+                "refresh_token": {
+                  "description": "The optional refresh token.",
+                  "type": "string",
+                  "example": "456-456-456-456"
+                },
+                "token_type": {
+                  "description": "The type of the returned token.",
+                  "type": "string",
+                  "example": "Bearer"
+                }
+              }
+            }
           }
         }
       }
     }
   },
+  "securityDefinitions": {
+    "BasicAuth": {
+      "type": "basic"
+    }
+  },
   "tags": [
     {
-      "description": "Everything about your Pets",
-      "name": "pet",
-      "externalDocs": {
-        "description": "Find out more",
-        "url": "http://swagger.io"
-      }
-    },
-    {
-      "description": "Access to Petstore orders",
-      "name": "store"
-    },
-    {
-      "description": "Operations about user",
-      "name": "user",
-      "externalDocs": {
-        "description": "Find out more about our store",
-        "url": "http://swagger.io"
-      }
+      "description": "OAuth2 related endpoints",
+      "name": "OAuth2"
     }
   ]
 }`))
 	FlatSwaggerJSON = json.RawMessage([]byte(`{
   "schemes": [
-    "https",
     "http"
   ],
   "swagger": "2.0",
@@ -111,53 +205,149 @@ func init() {
   "host": "TBD",
   "basePath": "/v1",
   "paths": {
-    "/oauth2/login": {
+    "/authorize": {
       "get": {
+        "description": "Entrypoint for most OAuth2 flows (currently only the code grant flow is supported).",
         "produces": [
           "text/html"
         ],
         "tags": [
-          "pet"
+          "OAuth2"
         ],
-        "summary": "Add a new pet to the store",
-        "operationId": "addPet",
+        "summary": "Authorization endpoint",
+        "operationId": "authorize",
         "parameters": [
           {
             "type": "string",
-            "description": "The expected response type (currently only code is supported)",
+            "description": "The expected response type (currently only code is supported).",
             "name": "response_type",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "The unique identifier of the client that has been registered with the auth server.",
+            "name": "client_id",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "The URI the client will be redirected to after a successful authorization (has to bee the same URI that has been registered with the auth server).",
+            "name": "redirect_uri",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "Comma-separated list of scopes the client wants to request.",
+            "name": "scope",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Opage value that will be returned unmodified after the redirect.",
+            "name": "state",
             "in": "query",
             "required": true
           }
         ],
         "responses": {
           "200": {
-            "description": "The login page"
+            "description": "The authorization page"
+          }
+        }
+      }
+    },
+    "/token": {
+      "post": {
+        "security": [
+          {
+            "basicAuth": []
+          }
+        ],
+        "description": "Endpoint to exchange an authorization code for an access token.",
+        "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "OAuth2"
+        ],
+        "summary": "Token endpoint",
+        "operationId": "token",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The requested grant type (currently only authorization_code is supported).",
+            "name": "grant_type",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "The authorization code that has been obtained from the authorization server.",
+            "name": "code",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "The URI the client will be redirected to after a successful authorization (has to bee the same URI that has been registered with the auth server).",
+            "name": "redirect_uri",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful token response.",
+            "schema": {
+              "type": "object",
+              "required": [
+                "access_token",
+                "token_type",
+                "expires_in"
+              ],
+              "properties": {
+                "access_token": {
+                  "description": "The generated access token.",
+                  "type": "string",
+                  "example": "123-123-123-123"
+                },
+                "expires_in": {
+                  "description": "The lifetime of the token in seconds.",
+                  "type": "integer",
+                  "example": 3600
+                },
+                "refresh_token": {
+                  "description": "The optional refresh token.",
+                  "type": "string",
+                  "example": "456-456-456-456"
+                },
+                "token_type": {
+                  "description": "The type of the returned token.",
+                  "type": "string",
+                  "example": "Bearer"
+                }
+              }
+            }
           }
         }
       }
     }
   },
+  "securityDefinitions": {
+    "BasicAuth": {
+      "type": "basic"
+    }
+  },
   "tags": [
     {
-      "description": "Everything about your Pets",
-      "name": "pet",
-      "externalDocs": {
-        "description": "Find out more",
-        "url": "http://swagger.io"
-      }
-    },
-    {
-      "description": "Access to Petstore orders",
-      "name": "store"
-    },
-    {
-      "description": "Operations about user",
-      "name": "user",
-      "externalDocs": {
-        "description": "Find out more about our store",
-        "url": "http://swagger.io"
-      }
+      "description": "OAuth2 related endpoints",
+      "name": "OAuth2"
     }
   ]
 }`))
