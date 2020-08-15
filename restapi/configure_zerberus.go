@@ -4,13 +4,13 @@ package restapi
 
 import (
 	"crypto/tls"
-	"io"
 	"net/http"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"
 
+	"github.com/eldelto/zerberus/internal/html"
 	"github.com/eldelto/zerberus/restapi/operations"
 	"github.com/eldelto/zerberus/restapi/operations/o_auth2"
 )
@@ -37,16 +37,14 @@ func configureAPI(api *operations.ZerberusAPI) http.Handler {
 
 	api.UrlformConsumer = runtime.DiscardConsumer
 
-	api.HTMLProducer = runtime.ProducerFunc(func(w io.Writer, data interface{}) error {
-		return errors.NotImplemented("html producer has not yet been implemented")
-	})
+	api.HTMLProducer = html.HTMLProducer
+
 	api.JSONProducer = runtime.JSONProducer()
 
-	if api.OAuth2AuthorizeHandler == nil {
-		api.OAuth2AuthorizeHandler = o_auth2.AuthorizeHandlerFunc(func(params o_auth2.AuthorizeParams) middleware.Responder {
-			return middleware.NotImplemented("operation o_auth2.Authorize has not yet been implemented")
-		})
-	}
+	api.OAuth2AuthorizeHandler = o_auth2.AuthorizeHandlerFunc(func(params o_auth2.AuthorizeParams) middleware.Responder {
+		return html.NewTemplateProvider("assets/templates/authorize.html", params)
+	})
+
 	if api.OAuth2TokenHandler == nil {
 		api.OAuth2TokenHandler = o_auth2.TokenHandlerFunc(func(params o_auth2.TokenParams, principal interface{}) middleware.Responder {
 			return middleware.NotImplemented("operation o_auth2.Token has not yet been implemented")

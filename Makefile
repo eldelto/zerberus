@@ -12,8 +12,8 @@ generate:
 
 build: generate
 	@echo Building cmd/zerberus-server/main.go
-	@go build cmd/zerberus-server/main.go -o bin/zerberus-server
+	@go build -o bin/zerberus-server cmd/zerberus-server/main.go
 
 run:
 	@echo Starting Zerberus
-	@go run cmd/zerberus-server/main.go
+	@go run cmd/zerberus-server/main.go --port 8080
