@@ -5,12 +5,14 @@ package restapi
 import (
 	"crypto/tls"
 	"net/http"
+	"strings"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"
 
 	"github.com/eldelto/zerberus/internal/html"
+	"github.com/eldelto/zerberus/restapi/model"
 	"github.com/eldelto/zerberus/restapi/operations"
 	"github.com/eldelto/zerberus/restapi/operations/o_auth2"
 )
@@ -42,7 +44,15 @@ func configureAPI(api *operations.ZerberusAPI) http.Handler {
 	api.JSONProducer = runtime.JSONProducer()
 
 	api.OAuth2AuthorizeHandler = o_auth2.AuthorizeHandlerFunc(func(params o_auth2.AuthorizeParams) middleware.Responder {
-		return html.NewTemplateProvider("assets/templates/authorize.html", params)
+		authorization := model.CodeGrantAuthorization{
+			ClientID:    params.ClientID,
+			RedirectURI: params.RedirectURI,
+			Scope:       extractScopes(*params.Scope),
+			State:       params.State,
+			Code:        generateAuthorizationCode(),
+		}
+
+		return html.NewTemplateProvider("assets/templates/authorize.html", authorization)
 	})
 
 	if api.OAuth2TokenHandler == nil {
@@ -80,4 +90,18 @@ func setupMiddlewares(handler http.Handler) http.Handler {
 // So this is a good place to plug in a panic handling middleware, logging and metrics
 func setupGlobalMiddleware(handler http.Handler) http.Handler {
 	return handler
+}
+
+func extractScopes(scopeString string) []string {
+	scopes := strings.Split(scopeString, ",")
+	for i, scope := range scopes {
+		scopes[i] = strings.TrimSpace(scope)
+	}
+
+	return scopes
+}
+
+func generateAuthorizationCode() string {
+	// TODO: Generate random UUID
+	return "123"
 }
