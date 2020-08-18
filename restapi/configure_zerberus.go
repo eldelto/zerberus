@@ -12,7 +12,7 @@ import (
 	"github.com/go-openapi/runtime/middleware"
 
 	"github.com/eldelto/zerberus/internal/html"
-	"github.com/eldelto/zerberus/restapi/model"
+	"github.com/eldelto/zerberus/oauth2"
 	"github.com/eldelto/zerberus/restapi/operations"
 	"github.com/eldelto/zerberus/restapi/operations/o_auth2"
 )
@@ -44,12 +44,11 @@ func configureAPI(api *operations.ZerberusAPI) http.Handler {
 	api.JSONProducer = runtime.JSONProducer()
 
 	api.OAuth2AuthorizeHandler = o_auth2.AuthorizeHandlerFunc(func(params o_auth2.AuthorizeParams) middleware.Responder {
-		authorization := model.CodeGrantAuthorization{
+		authorization := oauth2.AuthorizationRequest{
 			ClientID:    params.ClientID,
 			RedirectURI: params.RedirectURI,
-			Scope:       extractScopes(*params.Scope),
+			Scopes:      extractScopes(*params.Scope),
 			State:       params.State,
-			Code:        generateAuthorizationCode(),
 		}
 
 		return html.NewTemplateProvider("assets/templates/authorize.html", authorization)
