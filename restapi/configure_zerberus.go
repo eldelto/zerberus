@@ -13,6 +13,7 @@ import (
 
 	"github.com/eldelto/zerberus/internal/html"
 	"github.com/eldelto/zerberus/oauth2"
+	"github.com/eldelto/zerberus/oauth2/persistence"
 	"github.com/eldelto/zerberus/restapi/operations"
 	"github.com/eldelto/zerberus/restapi/operations/o_auth2"
 )
@@ -44,14 +45,17 @@ func configureAPI(api *operations.ZerberusAPI) http.Handler {
 	api.JSONProducer = runtime.JSONProducer()
 
 	api.OAuth2AuthorizeHandler = o_auth2.AuthorizeHandlerFunc(func(params o_auth2.AuthorizeParams) middleware.Responder {
-		authorization := oauth2.AuthorizationRequest{
+		request := oauth2.AuthorizationRequest{
 			ClientID:    params.ClientID,
 			RedirectURI: params.RedirectURI,
 			Scopes:      extractScopes(*params.Scope),
 			State:       params.State,
 		}
 
-		return html.NewTemplateProvider("assets/templates/authorize.html", authorization)
+		// TODO: Return the error as URL parameter
+		response, _ := service.Authorize(request)
+
+		return html.NewTemplateProvider("assets/templates/authorize.html", response)
 	})
 
 	if api.OAuth2TokenHandler == nil {
@@ -100,7 +104,5 @@ func extractScopes(scopeString string) []string {
 	return scopes
 }
 
-func generateAuthorizationCode() string {
-	// TODO: Generate random UUID
-	return "123"
-}
+var repo = persistence.NewInMemoryRepository()
+var service = oauth2.NewService(repo)

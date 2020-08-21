@@ -44,24 +44,40 @@ func NewService(repository Repository) *Service {
 func (s *Service) Authorize(request AuthorizationRequest) (AuthorizationResponse, error) {
 	err := validateAuthorizationRequest(request, s.repository)
 
+	// TODO: generate & store authorization code
+
 	return AuthorizationResponse{}, err
 }
 
 func validateAuthorizationRequest(request AuthorizationRequest, repository Repository) error {
 	config, err := repository.FetchClientConfiguration(request.ClientID)
 	if err != nil {
-		// TODO: Wrap with custom error
+		// TODO: Check for NotFoundError otherwise return wrapped error
 		return err
 	}
 
 	if request.RedirectURI != config.RedirectURI {
-		return newClientValidationError(request.ClientID, "Invalid redirect URI")
+		return NewClientValidationError(request.ClientID, "invalid redirect URI")
 	}
 
-	// TODO: Check if clientID exists
-	//       Check if RedirectURI matches
-	//       Check if scopes exist?
-	//       Check if client is allowed to obtain requested scopes?
+	return validateScopes(request, config)
+}
+
+func validateScopes(request AuthorizationRequest, config ClientConfiguration) error {
+	validScopes := config.Scopes
+	for scope := range request.Scopes {
+		valid := false
+		for validScope := range validScopes {
+			if scope == validScope {
+				valid = true
+				break
+			}
+		}
+
+		if !valid {
+			return NewClientValidationError(request.ClientID, fmt.Sprintf("invalid scope set"))
+		}
+	}
 
 	return nil
 }
@@ -71,8 +87,7 @@ type ClientValidationError struct {
 	message  string
 }
 
-func newClientValidationError(clientID, message string) *ClientValidationError {
-	// TODO: Include clientID in error message
+func NewClientValidationError(clientID, message string) *ClientValidationError {
 	return &ClientValidationError{
 		ClientID: clientID,
 		message:  fmt.Sprintf("%s: %s", clientID, message),
