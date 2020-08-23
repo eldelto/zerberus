@@ -87,9 +87,9 @@ func generateAuthorizationCode(request AuthorizationRequest, repository Reposito
 
 func validateScopes(request AuthorizationRequest, config ClientConfiguration) error {
 	validScopes := config.Scopes
-	for scope := range request.Scopes {
+	for _, scope := range request.Scopes {
 		valid := false
-		for validScope := range validScopes {
+		for _, validScope := range validScopes {
 			if scope == validScope {
 				valid = true
 				break
@@ -121,15 +121,17 @@ func (e *ClientValidationError) Error() string {
 }
 
 type NotFoundError struct {
-	*ClientValidationError
+	ClientID string
 }
 
-func NewNotFoundError(clientId string) error {
-	err := NewClientValidationError(clientId, "client could not be found")
-
+func NewNotFoundError(clientID string) error {
 	return &NotFoundError{
-		ClientValidationError: err,
+		ClientID: clientID,
 	}
+}
+
+func (e *NotFoundError) Error() string {
+	return fmt.Sprintf("%s: could not be found", e.ClientID)
 }
 
 type UnknownError struct {

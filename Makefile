@@ -17,3 +17,7 @@ build: generate
 run:
 	@echo Starting Zerberus
 	@go run cmd/zerberus-server/main.go --port 8080
+
+test:
+	@echo Testing Zerberus
+	@go test ./...
