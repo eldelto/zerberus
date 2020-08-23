@@ -52,7 +52,6 @@ func (s *Service) Authorize(request AuthorizationRequest) (AuthorizationResponse
 func validateAuthorizationRequest(request AuthorizationRequest, repository Repository) error {
 	config, err := repository.FetchClientConfiguration(request.ClientID)
 	if err != nil {
-		// TODO: Check for NotFoundError otherwise return wrapped error
 		return err
 	}
 
@@ -90,10 +89,43 @@ type ClientValidationError struct {
 func NewClientValidationError(clientID, message string) *ClientValidationError {
 	return &ClientValidationError{
 		ClientID: clientID,
-		message:  fmt.Sprintf("%s: %s", clientID, message),
+		message: message,
 	}
 }
 
 func (e *ClientValidationError) Error() string {
-	return e.message
+		return fmt.Sprintf("%s: %s", e.ClientID, e.message)
+}
+
+type NotFoundError struct {
+	*ClientValidationError
+}
+
+func NewNotFoundError(clientId string) error {
+	err := NewClientValidationError(clientId, "client could not be found")
+
+	return &NotFoundError{
+			ClientValidationError: err,
+	}
+}
+
+
+type UnknownError struct {
+	ClientID string
+	err error
+}
+
+func NewUnknownError(clientId string, err error) error {
+	return &UnknownError{
+		ClientID: clientId,
+		err: err,
+	}
+}
+
+func (e *UnknownError) Error() string {
+	return fmt.Sprintf("%s: %s", e.ClientID, e.err.Error());
+}
+
+func (e *UnknownError) Unwrap() error {
+	return e.err;
 }
