@@ -11,6 +11,7 @@ require (
 	github.com/go-openapi/swag v0.19.9
 	github.com/go-openapi/validate v0.19.10
 	github.com/go-swagger/go-swagger v0.25.0
+	github.com/google/uuid v1.1.1
 	github.com/jessevdk/go-flags v1.4.0
 	github.com/mailru/easyjson v0.7.2 // indirect
 	github.com/mitchellh/mapstructure v1.3.3 // indirect

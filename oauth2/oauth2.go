@@ -2,6 +2,8 @@ package oauth2
 
 import (
 	"fmt"
+
+	"github.com/google/uuid"
 )
 
 type AuthorizationRequest struct {
@@ -43,10 +45,11 @@ func NewService(repository Repository) *Service {
 
 func (s *Service) Authorize(request AuthorizationRequest) (AuthorizationResponse, error) {
 	err := validateAuthorizationRequest(request, s.repository)
+	if err != nil {
+		return AuthorizationResponse{}, err
+	}
 
-	// TODO: generate & store authorization code
-
-	return AuthorizationResponse{}, err
+	return generateAuthorizationCode(request, s.repository)
 }
 
 func validateAuthorizationRequest(request AuthorizationRequest, repository Repository) error {
@@ -60,6 +63,26 @@ func validateAuthorizationRequest(request AuthorizationRequest, repository Repos
 	}
 
 	return validateScopes(request, config)
+}
+
+func generateAuthorizationCode(request AuthorizationRequest, repository Repository) (AuthorizationResponse, error) {
+	code, err := uuid.NewRandom()
+	if err != nil {
+		return AuthorizationResponse{}, NewUnknownError(request.ClientID, err)
+	}
+
+	response := AuthorizationResponse{
+		ClientID:     request.ClientID,
+		RedirectURI:  request.RedirectURI,
+		ResponseType: request.ResponseType,
+		Scopes:       request.Scopes,
+		State:        request.State,
+		Code:         code.String(),
+	}
+
+	err = repository.StoreAuthorizationResponse(response)
+
+	return response, err
 }
 
 func validateScopes(request AuthorizationRequest, config ClientConfiguration) error {
@@ -89,12 +112,12 @@ type ClientValidationError struct {
 func NewClientValidationError(clientID, message string) *ClientValidationError {
 	return &ClientValidationError{
 		ClientID: clientID,
-		message: message,
+		message:  message,
 	}
 }
 
 func (e *ClientValidationError) Error() string {
-		return fmt.Sprintf("%s: %s", e.ClientID, e.message)
+	return fmt.Sprintf("%s: %s", e.ClientID, e.message)
 }
 
 type NotFoundError struct {
@@ -105,27 +128,26 @@ func NewNotFoundError(clientId string) error {
 	err := NewClientValidationError(clientId, "client could not be found")
 
 	return &NotFoundError{
-			ClientValidationError: err,
+		ClientValidationError: err,
 	}
 }
 
-
 type UnknownError struct {
 	ClientID string
-	err error
+	err      error
 }
 
 func NewUnknownError(clientId string, err error) error {
 	return &UnknownError{
 		ClientID: clientId,
-		err: err,
+		err:      err,
 	}
 }
 
 func (e *UnknownError) Error() string {
-	return fmt.Sprintf("%s: %s", e.ClientID, e.err.Error());
+	return fmt.Sprintf("%s: %s", e.ClientID, e.err.Error())
 }
 
 func (e *UnknownError) Unwrap() error {
-	return e.err;
+	return e.err
 }
