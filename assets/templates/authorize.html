@@ -4,8 +4,13 @@
 
   <h1>Authorize</h1>
 
-  <!-- TODO: Add all required parameters here -->
-  <form method="get" action="{{.RedirectURI}}">
+  <form method="post" action="/authorize">
+    <input type="hidden" name="client_id" value="{{.ClientID}}" />
+    <input type="hidden" name="redirect_uri" value="{{.RedirectURI}}" />
+    <input type="hidden" name="response_type" value="{{.ResponseType}}" />
+    <input type="hidden" name="scope" value="{{.Scope}}" />
+    <input type="hidden" name="state" value="{{.State}}" />
+
     <input type="submit" value="Authorize" />
   </form>
 

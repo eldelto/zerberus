@@ -44,7 +44,7 @@ func NewService(repository Repository) *Service {
 }
 
 func (s *Service) Authorize(request AuthorizationRequest) (AuthorizationResponse, error) {
-	err := validateAuthorizationRequest(request, s.repository)
+	err := s.ValidateAuthorizationRequest(request)
 	if err != nil {
 		return AuthorizationResponse{}, err
 	}
@@ -52,8 +52,8 @@ func (s *Service) Authorize(request AuthorizationRequest) (AuthorizationResponse
 	return generateAuthorizationCode(request, s.repository)
 }
 
-func validateAuthorizationRequest(request AuthorizationRequest, repository Repository) error {
-	config, err := repository.FetchClientConfiguration(request.ClientID)
+func (s *Service) ValidateAuthorizationRequest(request AuthorizationRequest) error {
+	config, err := s.repository.FetchClientConfiguration(request.ClientID)
 	if err != nil {
 		return err
 	}

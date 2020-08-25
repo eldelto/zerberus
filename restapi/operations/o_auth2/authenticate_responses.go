@@ -34,3 +34,27 @@ func (o *AuthenticateOK) WriteResponse(rw http.ResponseWriter, producer runtime.
 
 	rw.WriteHeader(200)
 }
+
+// AuthenticateFoundCode is the HTTP code returned for type AuthenticateFound
+const AuthenticateFoundCode int = 302
+
+/*AuthenticateFound Redirect to the given redirect_uri if the parameter validation failed.
+
+swagger:response authenticateFound
+*/
+type AuthenticateFound struct {
+}
+
+// NewAuthenticateFound creates AuthenticateFound with default headers values
+func NewAuthenticateFound() *AuthenticateFound {
+
+	return &AuthenticateFound{}
+}
+
+// WriteResponse to the client
+func (o *AuthenticateFound) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
+
+	rw.Header().Del(runtime.HeaderContentType) //Remove Content-Type on empty responses
+
+	rw.WriteHeader(302)
+}

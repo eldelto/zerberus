@@ -88,6 +88,9 @@ func init() {
         "responses": {
           "200": {
             "description": "The authentication page."
+          },
+          "302": {
+            "description": "Redirect to the given redirect_uri if the parameter validation failed."
           }
         }
       }
@@ -142,6 +145,9 @@ func init() {
         "responses": {
           "200": {
             "description": "The authorization page."
+          },
+          "302": {
+            "description": "Redirect to the given redirect_uri if the parameter validation failed."
           }
         }
       },
@@ -361,6 +367,9 @@ func init() {
         "responses": {
           "200": {
             "description": "The authentication page."
+          },
+          "302": {
+            "description": "Redirect to the given redirect_uri if the parameter validation failed."
           }
         }
       }
@@ -415,6 +424,9 @@ func init() {
         "responses": {
           "200": {
             "description": "The authorization page."
+          },
+          "302": {
+            "description": "Redirect to the given redirect_uri if the parameter validation failed."
           }
         }
       },

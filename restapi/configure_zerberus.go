@@ -52,14 +52,18 @@ func configureAPI(api *operations.ZerberusAPI) http.Handler {
 			State:       params.State,
 		}
 
-		// TODO: Return the error as URL parameter
-		response, _ := service.Authorize(request)
+		err := service.ValidateAuthorizationRequest(request)
+		if err != nil {
+			// TODO: Return the error as URL parameter
+			//       Will probably need a custom Responder implementation
+			return o_auth2.NewAuthorizeFound()
+		}
 
-		return html.NewTemplateProvider("assets/templates/authorize.html", response)
+		return html.NewTemplateProvider("assets/templates/authorize.html", request)
 	})
 
-	if api.OAuth2TokenHandler == nil {
-		api.OAuth2TokenHandler = o_auth2.TokenHandlerFunc(func(params o_auth2.TokenParams, principal interface{}) middleware.Responder {
+	if api.OAuth2CreateTokenHandler == nil {
+		api.OAuth2CreateTokenHandler = o_auth2.CreateTokenHandlerFunc(func(params o_auth2.CreateTokenParams, principal interface{}) middleware.Responder {
 			return middleware.NotImplemented("operation o_auth2.Token has not yet been implemented")
 		})
 	}

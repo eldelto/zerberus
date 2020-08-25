@@ -59,6 +59,8 @@ paths:
       responses:
         "200":
           description: "The authorization page."
+        "302":
+          description: "Redirect to the given redirect_uri if the parameter validation failed."
     post:
       tags:
       - "OAuth2"
@@ -133,6 +135,8 @@ paths:
       responses:
         "200":
           description: "The authentication page."
+        "302":
+          description: "Redirect to the given redirect_uri if the parameter validation failed."
 
   /token:
     post:

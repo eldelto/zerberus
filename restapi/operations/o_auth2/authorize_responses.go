@@ -34,3 +34,27 @@ func (o *AuthorizeOK) WriteResponse(rw http.ResponseWriter, producer runtime.Pro
 
 	rw.WriteHeader(200)
 }
+
+// AuthorizeFoundCode is the HTTP code returned for type AuthorizeFound
+const AuthorizeFoundCode int = 302
+
+/*AuthorizeFound Redirect to the given redirect_uri if the parameter validation failed.
+
+swagger:response authorizeFound
+*/
+type AuthorizeFound struct {
+}
+
+// NewAuthorizeFound creates AuthorizeFound with default headers values
+func NewAuthorizeFound() *AuthorizeFound {
+
+	return &AuthorizeFound{}
+}
+
+// WriteResponse to the client
+func (o *AuthorizeFound) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
+
+	rw.Header().Del(runtime.HeaderContentType) //Remove Content-Type on empty responses
+
+	rw.WriteHeader(302)
+}
