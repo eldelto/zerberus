@@ -14,7 +14,7 @@ import (
 // AuthorizeOKCode is the HTTP code returned for type AuthorizeOK
 const AuthorizeOKCode int = 200
 
-/*AuthorizeOK The authorization page
+/*AuthorizeOK The authorization page.
 
 swagger:response authorizeOK
 */

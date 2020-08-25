@@ -15,18 +15,18 @@ import (
 	"github.com/go-openapi/validate"
 )
 
-// NewTokenParams creates a new TokenParams object
+// NewCreateTokenParams creates a new CreateTokenParams object
 // no default values defined in spec.
-func NewTokenParams() TokenParams {
+func NewCreateTokenParams() CreateTokenParams {
 
-	return TokenParams{}
+	return CreateTokenParams{}
 }
 
-// TokenParams contains all the bound params for the token operation
+// CreateTokenParams contains all the bound params for the create token operation
 // typically these are obtained from a http.Request
 //
-// swagger:parameters token
-type TokenParams struct {
+// swagger:parameters create_token
+type CreateTokenParams struct {
 
 	// HTTP Request Object
 	HTTPRequest *http.Request `json:"-"`
@@ -51,8 +51,8 @@ type TokenParams struct {
 // BindRequest both binds and validates a request, it assumes that complex things implement a Validatable(strfmt.Registry) error interface
 // for simple values it will use straight method calls.
 //
-// To ensure default values, the struct must have been initialized with NewTokenParams() beforehand.
-func (o *TokenParams) BindRequest(r *http.Request, route *middleware.MatchedRoute) error {
+// To ensure default values, the struct must have been initialized with NewCreateTokenParams() beforehand.
+func (o *CreateTokenParams) BindRequest(r *http.Request, route *middleware.MatchedRoute) error {
 	var res []error
 
 	o.HTTPRequest = r
@@ -81,7 +81,7 @@ func (o *TokenParams) BindRequest(r *http.Request, route *middleware.MatchedRout
 }
 
 // bindCode binds and validates parameter Code from query.
-func (o *TokenParams) bindCode(rawData []string, hasKey bool, formats strfmt.Registry) error {
+func (o *CreateTokenParams) bindCode(rawData []string, hasKey bool, formats strfmt.Registry) error {
 	if !hasKey {
 		return errors.Required("code", "query", rawData)
 	}
@@ -102,7 +102,7 @@ func (o *TokenParams) bindCode(rawData []string, hasKey bool, formats strfmt.Reg
 }
 
 // bindGrantType binds and validates parameter GrantType from query.
-func (o *TokenParams) bindGrantType(rawData []string, hasKey bool, formats strfmt.Registry) error {
+func (o *CreateTokenParams) bindGrantType(rawData []string, hasKey bool, formats strfmt.Registry) error {
 	if !hasKey {
 		return errors.Required("grant_type", "query", rawData)
 	}
@@ -123,7 +123,7 @@ func (o *TokenParams) bindGrantType(rawData []string, hasKey bool, formats strfm
 }
 
 // bindRedirectURI binds and validates parameter RedirectURI from query.
-func (o *TokenParams) bindRedirectURI(rawData []string, hasKey bool, formats strfmt.Registry) error {
+func (o *CreateTokenParams) bindRedirectURI(rawData []string, hasKey bool, formats strfmt.Registry) error {
 	if !hasKey {
 		return errors.Required("redirect_uri", "query", rawData)
 	}

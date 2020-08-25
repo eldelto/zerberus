@@ -48,11 +48,17 @@ func NewZerberusAPI(spec *loads.Document) *ZerberusAPI {
 		}),
 		JSONProducer: runtime.JSONProducer(),
 
+		OAuth2AuthenticateHandler: o_auth2.AuthenticateHandlerFunc(func(params o_auth2.AuthenticateParams) middleware.Responder {
+			return middleware.NotImplemented("operation o_auth2.Authenticate has not yet been implemented")
+		}),
 		OAuth2AuthorizeHandler: o_auth2.AuthorizeHandlerFunc(func(params o_auth2.AuthorizeParams) middleware.Responder {
 			return middleware.NotImplemented("operation o_auth2.Authorize has not yet been implemented")
 		}),
-		OAuth2TokenHandler: o_auth2.TokenHandlerFunc(func(params o_auth2.TokenParams, principal interface{}) middleware.Responder {
-			return middleware.NotImplemented("operation o_auth2.Token has not yet been implemented")
+		OAuth2CreateAuthorizationHandler: o_auth2.CreateAuthorizationHandlerFunc(func(params o_auth2.CreateAuthorizationParams) middleware.Responder {
+			return middleware.NotImplemented("operation o_auth2.CreateAuthorization has not yet been implemented")
+		}),
+		OAuth2CreateTokenHandler: o_auth2.CreateTokenHandlerFunc(func(params o_auth2.CreateTokenParams, principal interface{}) middleware.Responder {
+			return middleware.NotImplemented("operation o_auth2.CreateToken has not yet been implemented")
 		}),
 	}
 }
@@ -91,10 +97,14 @@ type ZerberusAPI struct {
 	//   - application/json
 	JSONProducer runtime.Producer
 
+	// OAuth2AuthenticateHandler sets the operation handler for the authenticate operation
+	OAuth2AuthenticateHandler o_auth2.AuthenticateHandler
 	// OAuth2AuthorizeHandler sets the operation handler for the authorize operation
 	OAuth2AuthorizeHandler o_auth2.AuthorizeHandler
-	// OAuth2TokenHandler sets the operation handler for the token operation
-	OAuth2TokenHandler o_auth2.TokenHandler
+	// OAuth2CreateAuthorizationHandler sets the operation handler for the create authorization operation
+	OAuth2CreateAuthorizationHandler o_auth2.CreateAuthorizationHandler
+	// OAuth2CreateTokenHandler sets the operation handler for the create token operation
+	OAuth2CreateTokenHandler o_auth2.CreateTokenHandler
 	// ServeError is called when an error is received, there is a default handler
 	// but you can set your own with this
 	ServeError func(http.ResponseWriter, *http.Request, error)
@@ -174,11 +184,17 @@ func (o *ZerberusAPI) Validate() error {
 		unregistered = append(unregistered, "JSONProducer")
 	}
 
+	if o.OAuth2AuthenticateHandler == nil {
+		unregistered = append(unregistered, "o_auth2.AuthenticateHandler")
+	}
 	if o.OAuth2AuthorizeHandler == nil {
 		unregistered = append(unregistered, "o_auth2.AuthorizeHandler")
 	}
-	if o.OAuth2TokenHandler == nil {
-		unregistered = append(unregistered, "o_auth2.TokenHandler")
+	if o.OAuth2CreateAuthorizationHandler == nil {
+		unregistered = append(unregistered, "o_auth2.CreateAuthorizationHandler")
+	}
+	if o.OAuth2CreateTokenHandler == nil {
+		unregistered = append(unregistered, "o_auth2.CreateTokenHandler")
 	}
 
 	if len(unregistered) > 0 {
@@ -273,11 +289,19 @@ func (o *ZerberusAPI) initHandlerCache() {
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
+	o.handlers["GET"]["/authenticate"] = o_auth2.NewAuthenticate(o.context, o.OAuth2AuthenticateHandler)
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
 	o.handlers["GET"]["/authorize"] = o_auth2.NewAuthorize(o.context, o.OAuth2AuthorizeHandler)
 	if o.handlers["POST"] == nil {
 		o.handlers["POST"] = make(map[string]http.Handler)
 	}
-	o.handlers["POST"]["/token"] = o_auth2.NewToken(o.context, o.OAuth2TokenHandler)
+	o.handlers["POST"]["/authorize"] = o_auth2.NewCreateAuthorization(o.context, o.OAuth2CreateAuthorizationHandler)
+	if o.handlers["POST"] == nil {
+		o.handlers["POST"] = make(map[string]http.Handler)
+	}
+	o.handlers["POST"]["/token"] = o_auth2.NewCreateToken(o.context, o.OAuth2CreateTokenHandler)
 }
 
 // Serve creates a http handler to serve the API over HTTP

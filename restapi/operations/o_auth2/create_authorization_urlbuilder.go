@@ -11,11 +11,13 @@ import (
 	golangswaggerpaths "path"
 )
 
-// TokenURL generates an URL for the token operation
-type TokenURL struct {
-	Code        string
-	GrantType   string
-	RedirectURI string
+// CreateAuthorizationURL generates an URL for the create authorization operation
+type CreateAuthorizationURL struct {
+	ClientID     string
+	RedirectURI  string
+	ResponseType string
+	Scope        *string
+	State        string
 
 	_basePath string
 	// avoid unkeyed usage
@@ -25,7 +27,7 @@ type TokenURL struct {
 // WithBasePath sets the base path for this url builder, only required when it's different from the
 // base path specified in the swagger spec.
 // When the value of the base path is an empty string
-func (o *TokenURL) WithBasePath(bp string) *TokenURL {
+func (o *CreateAuthorizationURL) WithBasePath(bp string) *CreateAuthorizationURL {
 	o.SetBasePath(bp)
 	return o
 }
@@ -33,15 +35,15 @@ func (o *TokenURL) WithBasePath(bp string) *TokenURL {
 // SetBasePath sets the base path for this url builder, only required when it's different from the
 // base path specified in the swagger spec.
 // When the value of the base path is an empty string
-func (o *TokenURL) SetBasePath(bp string) {
+func (o *CreateAuthorizationURL) SetBasePath(bp string) {
 	o._basePath = bp
 }
 
 // Build a url path and query string
-func (o *TokenURL) Build() (*url.URL, error) {
+func (o *CreateAuthorizationURL) Build() (*url.URL, error) {
 	var _result url.URL
 
-	var _path = "/token"
+	var _path = "/authorize"
 
 	_basePath := o._basePath
 	if _basePath == "" {
@@ -51,19 +53,32 @@ func (o *TokenURL) Build() (*url.URL, error) {
 
 	qs := make(url.Values)
 
-	codeQ := o.Code
-	if codeQ != "" {
-		qs.Set("code", codeQ)
-	}
-
-	grantTypeQ := o.GrantType
-	if grantTypeQ != "" {
-		qs.Set("grant_type", grantTypeQ)
+	clientIDQ := o.ClientID
+	if clientIDQ != "" {
+		qs.Set("client_id", clientIDQ)
 	}
 
 	redirectURIQ := o.RedirectURI
 	if redirectURIQ != "" {
 		qs.Set("redirect_uri", redirectURIQ)
+	}
+
+	responseTypeQ := o.ResponseType
+	if responseTypeQ != "" {
+		qs.Set("response_type", responseTypeQ)
+	}
+
+	var scopeQ string
+	if o.Scope != nil {
+		scopeQ = *o.Scope
+	}
+	if scopeQ != "" {
+		qs.Set("scope", scopeQ)
+	}
+
+	stateQ := o.State
+	if stateQ != "" {
+		qs.Set("state", stateQ)
 	}
 
 	_result.RawQuery = qs.Encode()
@@ -72,7 +87,7 @@ func (o *TokenURL) Build() (*url.URL, error) {
 }
 
 // Must is a helper function to panic when the url builder returns an error
-func (o *TokenURL) Must(u *url.URL, err error) *url.URL {
+func (o *CreateAuthorizationURL) Must(u *url.URL, err error) *url.URL {
 	if err != nil {
 		panic(err)
 	}
@@ -83,17 +98,17 @@ func (o *TokenURL) Must(u *url.URL, err error) *url.URL {
 }
 
 // String returns the string representation of the path with query string
-func (o *TokenURL) String() string {
+func (o *CreateAuthorizationURL) String() string {
 	return o.Must(o.Build()).String()
 }
 
 // BuildFull builds a full url with scheme, host, path and query string
-func (o *TokenURL) BuildFull(scheme, host string) (*url.URL, error) {
+func (o *CreateAuthorizationURL) BuildFull(scheme, host string) (*url.URL, error) {
 	if scheme == "" {
-		return nil, errors.New("scheme is required for a full url on TokenURL")
+		return nil, errors.New("scheme is required for a full url on CreateAuthorizationURL")
 	}
 	if host == "" {
-		return nil, errors.New("host is required for a full url on TokenURL")
+		return nil, errors.New("host is required for a full url on CreateAuthorizationURL")
 	}
 
 	base, err := o.Build()
@@ -107,6 +122,6 @@ func (o *TokenURL) BuildFull(scheme, host string) (*url.URL, error) {
 }
 
 // StringFull returns the string representation of a complete url
-func (o *TokenURL) StringFull(scheme, host string) string {
+func (o *CreateAuthorizationURL) StringFull(scheme, host string) string {
 	return o.Must(o.BuildFull(scheme, host)).String()
 }

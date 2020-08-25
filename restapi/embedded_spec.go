@@ -38,6 +38,60 @@ func init() {
   "host": "TBD",
   "basePath": "/v1",
   "paths": {
+    "/authenticate": {
+      "get": {
+        "description": "Presents the user a selection of authentication providers.",
+        "produces": [
+          "text/html"
+        ],
+        "tags": [
+          "OAuth2"
+        ],
+        "summary": "Authentication entry point",
+        "operationId": "authenticate",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The expected response type (currently only code is supported).",
+            "name": "response_type",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "The unique identifier of the client that has been registered with the auth server.",
+            "name": "client_id",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "The URI the client will be redirected to after a successful authorization (has to bee the same URI that has been registered with the auth server).",
+            "name": "redirect_uri",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "Comma-separated list of scopes the client wants to request.",
+            "name": "scope",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Opage value that will be returned unmodified after the redirect.",
+            "name": "state",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The authentication page."
+          }
+        }
+      }
+    },
     "/authorize": {
       "get": {
         "description": "Entrypoint for most OAuth2 flows (currently only the code grant flow is supported).",
@@ -87,7 +141,59 @@ func init() {
         ],
         "responses": {
           "200": {
-            "description": "The authorization page"
+            "description": "The authorization page."
+          }
+        }
+      },
+      "post": {
+        "description": "Authorizes an application on behalf of the user.",
+        "produces": [
+          "text/html"
+        ],
+        "tags": [
+          "OAuth2"
+        ],
+        "summary": "Create authorization endpoint",
+        "operationId": "create_authorization",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The expected response type (currently only code is supported).",
+            "name": "response_type",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "The unique identifier of the client that has been registered with the auth server.",
+            "name": "client_id",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "The URI the client will be redirected to after a successful authorization (has to bee the same URI that has been registered with the auth server).",
+            "name": "redirect_uri",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "Comma-separated list of scopes the client wants to request.",
+            "name": "scope",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Opage value that will be returned unmodified after the redirect.",
+            "name": "state",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect to the given redirect_uri."
           }
         }
       }
@@ -110,7 +216,7 @@ func init() {
           "OAuth2"
         ],
         "summary": "Token endpoint",
-        "operationId": "token",
+        "operationId": "create_token",
         "parameters": [
           {
             "type": "string",
@@ -205,6 +311,60 @@ func init() {
   "host": "TBD",
   "basePath": "/v1",
   "paths": {
+    "/authenticate": {
+      "get": {
+        "description": "Presents the user a selection of authentication providers.",
+        "produces": [
+          "text/html"
+        ],
+        "tags": [
+          "OAuth2"
+        ],
+        "summary": "Authentication entry point",
+        "operationId": "authenticate",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The expected response type (currently only code is supported).",
+            "name": "response_type",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "The unique identifier of the client that has been registered with the auth server.",
+            "name": "client_id",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "The URI the client will be redirected to after a successful authorization (has to bee the same URI that has been registered with the auth server).",
+            "name": "redirect_uri",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "Comma-separated list of scopes the client wants to request.",
+            "name": "scope",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Opage value that will be returned unmodified after the redirect.",
+            "name": "state",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The authentication page."
+          }
+        }
+      }
+    },
     "/authorize": {
       "get": {
         "description": "Entrypoint for most OAuth2 flows (currently only the code grant flow is supported).",
@@ -254,7 +414,59 @@ func init() {
         ],
         "responses": {
           "200": {
-            "description": "The authorization page"
+            "description": "The authorization page."
+          }
+        }
+      },
+      "post": {
+        "description": "Authorizes an application on behalf of the user.",
+        "produces": [
+          "text/html"
+        ],
+        "tags": [
+          "OAuth2"
+        ],
+        "summary": "Create authorization endpoint",
+        "operationId": "create_authorization",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "The expected response type (currently only code is supported).",
+            "name": "response_type",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "The unique identifier of the client that has been registered with the auth server.",
+            "name": "client_id",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "The URI the client will be redirected to after a successful authorization (has to bee the same URI that has been registered with the auth server).",
+            "name": "redirect_uri",
+            "in": "query",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "Comma-separated list of scopes the client wants to request.",
+            "name": "scope",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Opage value that will be returned unmodified after the redirect.",
+            "name": "state",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect to the given redirect_uri."
           }
         }
       }
@@ -277,7 +489,7 @@ func init() {
           "OAuth2"
         ],
         "summary": "Token endpoint",
-        "operationId": "token",
+        "operationId": "create_token",
         "parameters": [
           {
             "type": "string",

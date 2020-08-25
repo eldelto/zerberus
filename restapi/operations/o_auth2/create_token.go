@@ -15,42 +15,42 @@ import (
 	"github.com/go-openapi/validate"
 )
 
-// TokenHandlerFunc turns a function with the right signature into a token handler
-type TokenHandlerFunc func(TokenParams, interface{}) middleware.Responder
+// CreateTokenHandlerFunc turns a function with the right signature into a create token handler
+type CreateTokenHandlerFunc func(CreateTokenParams, interface{}) middleware.Responder
 
 // Handle executing the request and returning a response
-func (fn TokenHandlerFunc) Handle(params TokenParams, principal interface{}) middleware.Responder {
+func (fn CreateTokenHandlerFunc) Handle(params CreateTokenParams, principal interface{}) middleware.Responder {
 	return fn(params, principal)
 }
 
-// TokenHandler interface for that can handle valid token params
-type TokenHandler interface {
-	Handle(TokenParams, interface{}) middleware.Responder
+// CreateTokenHandler interface for that can handle valid create token params
+type CreateTokenHandler interface {
+	Handle(CreateTokenParams, interface{}) middleware.Responder
 }
 
-// NewToken creates a new http.Handler for the token operation
-func NewToken(ctx *middleware.Context, handler TokenHandler) *Token {
-	return &Token{Context: ctx, Handler: handler}
+// NewCreateToken creates a new http.Handler for the create token operation
+func NewCreateToken(ctx *middleware.Context, handler CreateTokenHandler) *CreateToken {
+	return &CreateToken{Context: ctx, Handler: handler}
 }
 
-/*Token swagger:route POST /token OAuth2 token
+/*CreateToken swagger:route POST /token OAuth2 createToken
 
 Token endpoint
 
 Endpoint to exchange an authorization code for an access token.
 
 */
-type Token struct {
+type CreateToken struct {
 	Context *middleware.Context
-	Handler TokenHandler
+	Handler CreateTokenHandler
 }
 
-func (o *Token) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+func (o *CreateToken) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	route, rCtx, _ := o.Context.RouteInfo(r)
 	if rCtx != nil {
 		r = rCtx
 	}
-	var Params = NewTokenParams()
+	var Params = NewCreateTokenParams()
 
 	uprinc, aCtx, err := o.Context.Authorize(r, route)
 	if err != nil {
@@ -76,10 +76,10 @@ func (o *Token) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 }
 
-// TokenOKBody token o k body
+// CreateTokenOKBody create token o k body
 //
-// swagger:model TokenOKBody
-type TokenOKBody struct {
+// swagger:model CreateTokenOKBody
+type CreateTokenOKBody struct {
 
 	// The generated access token.
 	// Required: true
@@ -97,8 +97,8 @@ type TokenOKBody struct {
 	TokenType *string `json:"token_type"`
 }
 
-// Validate validates this token o k body
-func (o *TokenOKBody) Validate(formats strfmt.Registry) error {
+// Validate validates this create token o k body
+func (o *CreateTokenOKBody) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := o.validateAccessToken(formats); err != nil {
@@ -119,27 +119,27 @@ func (o *TokenOKBody) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-func (o *TokenOKBody) validateAccessToken(formats strfmt.Registry) error {
+func (o *CreateTokenOKBody) validateAccessToken(formats strfmt.Registry) error {
 
-	if err := validate.Required("tokenOK"+"."+"access_token", "body", o.AccessToken); err != nil {
+	if err := validate.Required("createTokenOK"+"."+"access_token", "body", o.AccessToken); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (o *TokenOKBody) validateExpiresIn(formats strfmt.Registry) error {
+func (o *CreateTokenOKBody) validateExpiresIn(formats strfmt.Registry) error {
 
-	if err := validate.Required("tokenOK"+"."+"expires_in", "body", o.ExpiresIn); err != nil {
+	if err := validate.Required("createTokenOK"+"."+"expires_in", "body", o.ExpiresIn); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (o *TokenOKBody) validateTokenType(formats strfmt.Registry) error {
+func (o *CreateTokenOKBody) validateTokenType(formats strfmt.Registry) error {
 
-	if err := validate.Required("tokenOK"+"."+"token_type", "body", o.TokenType); err != nil {
+	if err := validate.Required("createTokenOK"+"."+"token_type", "body", o.TokenType); err != nil {
 		return err
 	}
 
@@ -147,7 +147,7 @@ func (o *TokenOKBody) validateTokenType(formats strfmt.Registry) error {
 }
 
 // MarshalBinary interface implementation
-func (o *TokenOKBody) MarshalBinary() ([]byte, error) {
+func (o *CreateTokenOKBody) MarshalBinary() ([]byte, error) {
 	if o == nil {
 		return nil, nil
 	}
@@ -155,8 +155,8 @@ func (o *TokenOKBody) MarshalBinary() ([]byte, error) {
 }
 
 // UnmarshalBinary interface implementation
-func (o *TokenOKBody) UnmarshalBinary(b []byte) error {
-	var res TokenOKBody
+func (o *CreateTokenOKBody) UnmarshalBinary(b []byte) error {
+	var res CreateTokenOKBody
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}
