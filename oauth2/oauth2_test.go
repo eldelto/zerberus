@@ -81,6 +81,10 @@ func validAuthorizationRequest() AuthorizationRequest {
 
 type StubRepository struct{}
 
+func (r *StubRepository) StoreClientConfiguration(config ClientConfiguration) error {
+	return nil
+}
+
 func (r *StubRepository) FetchClientConfiguration(clientID string) (ClientConfiguration, error) {
 	switch clientID {
 	case notFoundClientID:

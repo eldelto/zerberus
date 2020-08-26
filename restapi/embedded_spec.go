@@ -153,6 +153,9 @@ func init() {
       },
       "post": {
         "description": "Authorizes an application on behalf of the user.",
+        "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
         "produces": [
           "text/html"
         ],
@@ -166,34 +169,34 @@ func init() {
             "type": "string",
             "description": "The expected response type (currently only code is supported).",
             "name": "response_type",
-            "in": "query",
+            "in": "formData",
             "required": true
           },
           {
             "type": "string",
             "description": "The unique identifier of the client that has been registered with the auth server.",
             "name": "client_id",
-            "in": "query",
+            "in": "formData",
             "required": true
           },
           {
             "type": "string",
             "description": "The URI the client will be redirected to after a successful authorization (has to bee the same URI that has been registered with the auth server).",
             "name": "redirect_uri",
-            "in": "query",
+            "in": "formData",
             "required": true
           },
           {
             "type": "string",
             "description": "Comma-separated list of scopes the client wants to request.",
             "name": "scope",
-            "in": "query"
+            "in": "formData"
           },
           {
             "type": "string",
             "description": "Opage value that will be returned unmodified after the redirect.",
             "name": "state",
-            "in": "query",
+            "in": "formData",
             "required": true
           }
         ],
@@ -432,6 +435,9 @@ func init() {
       },
       "post": {
         "description": "Authorizes an application on behalf of the user.",
+        "consumes": [
+          "application/x-www-form-urlencoded"
+        ],
         "produces": [
           "text/html"
         ],
@@ -445,34 +451,34 @@ func init() {
             "type": "string",
             "description": "The expected response type (currently only code is supported).",
             "name": "response_type",
-            "in": "query",
+            "in": "formData",
             "required": true
           },
           {
             "type": "string",
             "description": "The unique identifier of the client that has been registered with the auth server.",
             "name": "client_id",
-            "in": "query",
+            "in": "formData",
             "required": true
           },
           {
             "type": "string",
             "description": "The URI the client will be redirected to after a successful authorization (has to bee the same URI that has been registered with the auth server).",
             "name": "redirect_uri",
-            "in": "query",
+            "in": "formData",
             "required": true
           },
           {
             "type": "string",
             "description": "Comma-separated list of scopes the client wants to request.",
             "name": "scope",
-            "in": "query"
+            "in": "formData"
           },
           {
             "type": "string",
             "description": "Opage value that will be returned unmodified after the redirect.",
             "name": "state",
-            "in": "query",
+            "in": "formData",
             "required": true
           }
         ],

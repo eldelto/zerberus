@@ -31,6 +31,7 @@ type ClientConfiguration struct {
 }
 
 type Repository interface {
+	StoreClientConfiguration(config ClientConfiguration) error
 	FetchClientConfiguration(clientID string) (ClientConfiguration, error)
 	StoreAuthorizationResponse(response AuthorizationResponse) error
 }

@@ -13,15 +13,7 @@ import (
 
 // CreateAuthorizationURL generates an URL for the create authorization operation
 type CreateAuthorizationURL struct {
-	ClientID     string
-	RedirectURI  string
-	ResponseType string
-	Scope        *string
-	State        string
-
 	_basePath string
-	// avoid unkeyed usage
-	_ struct{}
 }
 
 // WithBasePath sets the base path for this url builder, only required when it's different from the
@@ -50,38 +42,6 @@ func (o *CreateAuthorizationURL) Build() (*url.URL, error) {
 		_basePath = "/v1"
 	}
 	_result.Path = golangswaggerpaths.Join(_basePath, _path)
-
-	qs := make(url.Values)
-
-	clientIDQ := o.ClientID
-	if clientIDQ != "" {
-		qs.Set("client_id", clientIDQ)
-	}
-
-	redirectURIQ := o.RedirectURI
-	if redirectURIQ != "" {
-		qs.Set("redirect_uri", redirectURIQ)
-	}
-
-	responseTypeQ := o.ResponseType
-	if responseTypeQ != "" {
-		qs.Set("response_type", responseTypeQ)
-	}
-
-	var scopeQ string
-	if o.Scope != nil {
-		scopeQ = *o.Scope
-	}
-	if scopeQ != "" {
-		qs.Set("scope", scopeQ)
-	}
-
-	stateQ := o.State
-	if stateQ != "" {
-		qs.Set("state", stateQ)
-	}
-
-	_result.RawQuery = qs.Encode()
 
 	return &_result, nil
 }

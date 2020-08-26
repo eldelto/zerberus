@@ -33,26 +33,26 @@ type CreateAuthorizationParams struct {
 
 	/*The unique identifier of the client that has been registered with the auth server.
 	  Required: true
-	  In: query
+	  In: formData
 	*/
 	ClientID string
 	/*The URI the client will be redirected to after a successful authorization (has to bee the same URI that has been registered with the auth server).
 	  Required: true
-	  In: query
+	  In: formData
 	*/
 	RedirectURI string
 	/*The expected response type (currently only code is supported).
 	  Required: true
-	  In: query
+	  In: formData
 	*/
 	ResponseType string
 	/*Comma-separated list of scopes the client wants to request.
-	  In: query
+	  In: formData
 	*/
 	Scope *string
 	/*Opage value that will be returned unmodified after the redirect.
 	  Required: true
-	  In: query
+	  In: formData
 	*/
 	State string
 }
@@ -66,30 +66,37 @@ func (o *CreateAuthorizationParams) BindRequest(r *http.Request, route *middlewa
 
 	o.HTTPRequest = r
 
-	qs := runtime.Values(r.URL.Query())
+	if err := r.ParseMultipartForm(32 << 20); err != nil {
+		if err != http.ErrNotMultipart {
+			return errors.New(400, "%v", err)
+		} else if err := r.ParseForm(); err != nil {
+			return errors.New(400, "%v", err)
+		}
+	}
+	fds := runtime.Values(r.Form)
 
-	qClientID, qhkClientID, _ := qs.GetOK("client_id")
-	if err := o.bindClientID(qClientID, qhkClientID, route.Formats); err != nil {
+	fdClientID, fdhkClientID, _ := fds.GetOK("client_id")
+	if err := o.bindClientID(fdClientID, fdhkClientID, route.Formats); err != nil {
 		res = append(res, err)
 	}
 
-	qRedirectURI, qhkRedirectURI, _ := qs.GetOK("redirect_uri")
-	if err := o.bindRedirectURI(qRedirectURI, qhkRedirectURI, route.Formats); err != nil {
+	fdRedirectURI, fdhkRedirectURI, _ := fds.GetOK("redirect_uri")
+	if err := o.bindRedirectURI(fdRedirectURI, fdhkRedirectURI, route.Formats); err != nil {
 		res = append(res, err)
 	}
 
-	qResponseType, qhkResponseType, _ := qs.GetOK("response_type")
-	if err := o.bindResponseType(qResponseType, qhkResponseType, route.Formats); err != nil {
+	fdResponseType, fdhkResponseType, _ := fds.GetOK("response_type")
+	if err := o.bindResponseType(fdResponseType, fdhkResponseType, route.Formats); err != nil {
 		res = append(res, err)
 	}
 
-	qScope, qhkScope, _ := qs.GetOK("scope")
-	if err := o.bindScope(qScope, qhkScope, route.Formats); err != nil {
+	fdScope, fdhkScope, _ := fds.GetOK("scope")
+	if err := o.bindScope(fdScope, fdhkScope, route.Formats); err != nil {
 		res = append(res, err)
 	}
 
-	qState, qhkState, _ := qs.GetOK("state")
-	if err := o.bindState(qState, qhkState, route.Formats); err != nil {
+	fdState, fdhkState, _ := fds.GetOK("state")
+	if err := o.bindState(fdState, fdhkState, route.Formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -99,10 +106,10 @@ func (o *CreateAuthorizationParams) BindRequest(r *http.Request, route *middlewa
 	return nil
 }
 
-// bindClientID binds and validates parameter ClientID from query.
+// bindClientID binds and validates parameter ClientID from formData.
 func (o *CreateAuthorizationParams) bindClientID(rawData []string, hasKey bool, formats strfmt.Registry) error {
 	if !hasKey {
-		return errors.Required("client_id", "query", rawData)
+		return errors.Required("client_id", "formData", rawData)
 	}
 	var raw string
 	if len(rawData) > 0 {
@@ -110,8 +117,8 @@ func (o *CreateAuthorizationParams) bindClientID(rawData []string, hasKey bool, 
 	}
 
 	// Required: true
-	// AllowEmptyValue: false
-	if err := validate.RequiredString("client_id", "query", raw); err != nil {
+
+	if err := validate.RequiredString("client_id", "formData", raw); err != nil {
 		return err
 	}
 
@@ -120,10 +127,10 @@ func (o *CreateAuthorizationParams) bindClientID(rawData []string, hasKey bool, 
 	return nil
 }
 
-// bindRedirectURI binds and validates parameter RedirectURI from query.
+// bindRedirectURI binds and validates parameter RedirectURI from formData.
 func (o *CreateAuthorizationParams) bindRedirectURI(rawData []string, hasKey bool, formats strfmt.Registry) error {
 	if !hasKey {
-		return errors.Required("redirect_uri", "query", rawData)
+		return errors.Required("redirect_uri", "formData", rawData)
 	}
 	var raw string
 	if len(rawData) > 0 {
@@ -131,8 +138,8 @@ func (o *CreateAuthorizationParams) bindRedirectURI(rawData []string, hasKey boo
 	}
 
 	// Required: true
-	// AllowEmptyValue: false
-	if err := validate.RequiredString("redirect_uri", "query", raw); err != nil {
+
+	if err := validate.RequiredString("redirect_uri", "formData", raw); err != nil {
 		return err
 	}
 
@@ -141,10 +148,10 @@ func (o *CreateAuthorizationParams) bindRedirectURI(rawData []string, hasKey boo
 	return nil
 }
 
-// bindResponseType binds and validates parameter ResponseType from query.
+// bindResponseType binds and validates parameter ResponseType from formData.
 func (o *CreateAuthorizationParams) bindResponseType(rawData []string, hasKey bool, formats strfmt.Registry) error {
 	if !hasKey {
-		return errors.Required("response_type", "query", rawData)
+		return errors.Required("response_type", "formData", rawData)
 	}
 	var raw string
 	if len(rawData) > 0 {
@@ -152,8 +159,8 @@ func (o *CreateAuthorizationParams) bindResponseType(rawData []string, hasKey bo
 	}
 
 	// Required: true
-	// AllowEmptyValue: false
-	if err := validate.RequiredString("response_type", "query", raw); err != nil {
+
+	if err := validate.RequiredString("response_type", "formData", raw); err != nil {
 		return err
 	}
 
@@ -162,7 +169,7 @@ func (o *CreateAuthorizationParams) bindResponseType(rawData []string, hasKey bo
 	return nil
 }
 
-// bindScope binds and validates parameter Scope from query.
+// bindScope binds and validates parameter Scope from formData.
 func (o *CreateAuthorizationParams) bindScope(rawData []string, hasKey bool, formats strfmt.Registry) error {
 	var raw string
 	if len(rawData) > 0 {
@@ -170,7 +177,7 @@ func (o *CreateAuthorizationParams) bindScope(rawData []string, hasKey bool, for
 	}
 
 	// Required: false
-	// AllowEmptyValue: false
+
 	if raw == "" { // empty values pass all other validations
 		return nil
 	}
@@ -180,10 +187,10 @@ func (o *CreateAuthorizationParams) bindScope(rawData []string, hasKey bool, for
 	return nil
 }
 
-// bindState binds and validates parameter State from query.
+// bindState binds and validates parameter State from formData.
 func (o *CreateAuthorizationParams) bindState(rawData []string, hasKey bool, formats strfmt.Registry) error {
 	if !hasKey {
-		return errors.Required("state", "query", rawData)
+		return errors.Required("state", "formData", rawData)
 	}
 	var raw string
 	if len(rawData) > 0 {
@@ -191,8 +198,8 @@ func (o *CreateAuthorizationParams) bindState(rawData []string, hasKey bool, for
 	}
 
 	// Required: true
-	// AllowEmptyValue: false
-	if err := validate.RequiredString("state", "query", raw); err != nil {
+
+	if err := validate.RequiredString("state", "formData", raw); err != nil {
 		return err
 	}
 

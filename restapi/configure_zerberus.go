@@ -25,6 +25,8 @@ func configureFlags(api *operations.ZerberusAPI) {
 }
 
 func configureAPI(api *operations.ZerberusAPI) http.Handler {
+	repo.StoreClientConfiguration(testConfig)
+
 	// configure the api here
 	api.ServeError = errors.ServeError
 
@@ -48,6 +50,7 @@ func configureAPI(api *operations.ZerberusAPI) http.Handler {
 		request := oauth2.AuthorizationRequest{
 			ClientID:    params.ClientID,
 			RedirectURI: params.RedirectURI,
+			ResponseType: params.ResponseType,
 			Scopes:      extractScopes(*params.Scope),
 			State:       params.State,
 		}
@@ -55,11 +58,20 @@ func configureAPI(api *operations.ZerberusAPI) http.Handler {
 		err := service.ValidateAuthorizationRequest(request)
 		if err != nil {
 			// TODO: Return the error as URL parameter
-			//       Will probably need a custom Responder implementation
-			return o_auth2.NewAuthorizeFound()
+			//       Will probably need a custom Responder implementation => overwrite ServeError
+			return newRedirect(request.RedirectURI)
 		}
 
+		// TODO: Validate session cookie existance otherwise redirect to /authenticate
+
 		return html.NewTemplateProvider("assets/templates/authorize.html", request)
+	})
+
+	api.OAuth2CreateAuthorizationHandler = o_auth2.CreateAuthorizationHandlerFunc(func(params o_auth2.CreateAuthorizationParams) middleware.Responder {
+		// TODO: Generate the authorization code here
+		// TODO: Disable trailing slash rewrite in Caddy
+
+		return newRedirect(params.RedirectURI + "?code=123-123-123-123-123")
 	})
 
 	if api.OAuth2CreateTokenHandler == nil {
@@ -108,5 +120,29 @@ func extractScopes(scopeString string) []string {
 	return scopes
 }
 
+type Redirect struct {
+	location string
+}
+
+func newRedirect(location string) *Redirect {
+	return &Redirect{location}
+}
+
+func (r *Redirect) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
+	rw.Header().Del(runtime.HeaderContentType) //Remove Content-Type on empty responses
+	rw.Header().Add("Location", r.location)
+	rw.WriteHeader(302)
+}
+
+
+var testConfig = oauth2.ClientConfiguration{
+	ClientID: "solvent",
+	RedirectURI: "https://www.eldelto.net/solvent",
+	Scopes: []string{"read", "write"},
+	ClientSecret: "secret",
+}
+
 var repo = persistence.NewInMemoryRepository()
 var service = oauth2.NewService(repo)
+
+// http://localhost:8080/v1/authorize?client_id=solvent&response_type=code&redirect_uri=https://www.eldelto.net/solvent&scope=read&state=123

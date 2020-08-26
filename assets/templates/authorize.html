@@ -4,11 +4,11 @@
 
   <h1>Authorize</h1>
 
-  <form method="post" action="/authorize">
+  <form method="post" action="/v1/authorize">
     <input type="hidden" name="client_id" value="{{.ClientID}}" />
     <input type="hidden" name="redirect_uri" value="{{.RedirectURI}}" />
     <input type="hidden" name="response_type" value="{{.ResponseType}}" />
-    <input type="hidden" name="scope" value="{{.Scope}}" />
+    <input type="hidden" name="scope" value="{{.Scopes}}" />
     <input type="hidden" name="state" value="{{.State}}" />
 
     <input type="submit" value="Authorize" />
