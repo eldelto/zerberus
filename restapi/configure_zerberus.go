@@ -4,6 +4,7 @@ package restapi
 
 import (
 	"crypto/tls"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -48,11 +49,11 @@ func configureAPI(api *operations.ZerberusAPI) http.Handler {
 
 	api.OAuth2AuthorizeHandler = o_auth2.AuthorizeHandlerFunc(func(params o_auth2.AuthorizeParams) middleware.Responder {
 		request := oauth2.AuthorizationRequest{
-			ClientID:    params.ClientID,
-			RedirectURI: params.RedirectURI,
+			ClientID:     params.ClientID,
+			RedirectURI:  params.RedirectURI,
 			ResponseType: params.ResponseType,
-			Scopes:      extractScopes(*params.Scope),
-			State:       params.State,
+			Scopes:       extractScopes(*params.Scope),
+			State:        params.State,
 		}
 
 		err := service.ValidateAuthorizationRequest(request)
@@ -62,9 +63,28 @@ func configureAPI(api *operations.ZerberusAPI) http.Handler {
 			return newRedirect(request.RedirectURI)
 		}
 
+		_, err = params.HTTPRequest.Cookie("ZSC")
+		if err != nil {
+			return newAuthenticateRedirect(request)
+		}
+
 		// TODO: Validate session cookie existance otherwise redirect to /authenticate
 
 		return html.NewTemplateProvider("assets/templates/authorize.html", request)
+	})
+
+	api.OAuth2AuthenticateHandler = o_auth2.AuthenticateHandlerFunc(func(params o_auth2.AuthenticateParams) middleware.Responder {
+		//request := oauth2.AuthorizationRequest{
+		//	ClientID:     params.ClientID,
+		//	RedirectURI:  params.RedirectURI,
+		//	ResponseType: params.ResponseType,
+		//	Scopes:       extractScopes(*params.Scope),
+		//	State:        params.State,
+		//}
+
+		// TODO: Set secure http cookie here
+
+		return html.NewTemplateProvider("assets/templates/authenticate.html", nil)
 	})
 
 	api.OAuth2CreateAuthorizationHandler = o_auth2.CreateAuthorizationHandlerFunc(func(params o_auth2.CreateAuthorizationParams) middleware.Responder {
@@ -120,6 +140,15 @@ func extractScopes(scopeString string) []string {
 	return scopes
 }
 
+func authorizationRequestToQuery(request oauth2.AuthorizationRequest) string {
+ return fmt.Sprintf("?client_id=%s&redirect_uri=%s&scope=%s&response_type=%s&state=%s",
+		request.ClientID,
+		request.RedirectURI,
+		strings.Join(request.Scopes, ","),
+		request.ResponseType,
+		request.State)
+}
+
 type Redirect struct {
 	location string
 }
@@ -128,17 +157,21 @@ func newRedirect(location string) *Redirect {
 	return &Redirect{location}
 }
 
+func newAuthenticateRedirect(request oauth2.AuthorizationRequest) *Redirect {
+	location := "/v1/authenticate" + authorizationRequestToQuery(request)
+	return newRedirect(location)
+}
+
 func (r *Redirect) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
 	rw.Header().Del(runtime.HeaderContentType) //Remove Content-Type on empty responses
 	rw.Header().Add("Location", r.location)
 	rw.WriteHeader(302)
 }
 
-
 var testConfig = oauth2.ClientConfiguration{
-	ClientID: "solvent",
-	RedirectURI: "https://www.eldelto.net/solvent",
-	Scopes: []string{"read", "write"},
+	ClientID:     "solvent",
+	RedirectURI:  "https://www.eldelto.net/solvent",
+	Scopes:       []string{"read", "write"},
 	ClientSecret: "secret",
 }
 
