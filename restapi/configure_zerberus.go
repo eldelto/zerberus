@@ -74,17 +74,27 @@ func configureAPI(api *operations.ZerberusAPI) http.Handler {
 	})
 
 	api.OAuth2AuthenticateHandler = o_auth2.AuthenticateHandlerFunc(func(params o_auth2.AuthenticateParams) middleware.Responder {
-		//request := oauth2.AuthorizationRequest{
-		//	ClientID:     params.ClientID,
-		//	RedirectURI:  params.RedirectURI,
-		//	ResponseType: params.ResponseType,
-		//	Scopes:       extractScopes(*params.Scope),
-		//	State:        params.State,
-		//}
+		request := oauth2.AuthorizationRequest{
+			ClientID:     params.ClientID,
+			RedirectURI:  params.RedirectURI,
+			ResponseType: params.ResponseType,
+			Scopes:       extractScopes(*params.Scope),
+			State:        params.State,
+		}
 
-		// TODO: Set secure http cookie here
+		return middleware.ResponderFunc(func(rw http.ResponseWriter, producer runtime.Producer) {
+			cookie := http.Cookie{
+				Name:     "authorizationQuery",
+				Value:    authorizationRequestToQuery(request),
+				MaxAge: 5 * 60,
+				HttpOnly: true,
+				Secure:   true,
+			}
+			http.SetCookie(rw, &cookie)
 
-		return html.NewTemplateProvider("assets/templates/authenticate.html", nil)
+			html.NewTemplateProvider("assets/templates/authenticate.html", nil).WriteResponse(rw, producer)
+		})
+
 	})
 
 	api.OAuth2CreateAuthorizationHandler = o_auth2.CreateAuthorizationHandlerFunc(func(params o_auth2.CreateAuthorizationParams) middleware.Responder {
@@ -141,7 +151,7 @@ func extractScopes(scopeString string) []string {
 }
 
 func authorizationRequestToQuery(request oauth2.AuthorizationRequest) string {
- return fmt.Sprintf("?client_id=%s&redirect_uri=%s&scope=%s&response_type=%s&state=%s",
+	return fmt.Sprintf("?client_id=%s&redirect_uri=%s&scope=%s&response_type=%s&state=%s",
 		request.ClientID,
 		request.RedirectURI,
 		strings.Join(request.Scopes, ","),
@@ -179,3 +189,12 @@ var repo = persistence.NewInMemoryRepository()
 var service = oauth2.NewService(repo)
 
 // http://localhost:8080/v1/authorize?client_id=solvent&response_type=code&redirect_uri=https://www.eldelto.net/solvent&scope=read&state=123
+
+/* 	TODO
+	 	Create FakeLoginProvider endpoint which calls our callback URL
+		Create a callback handler which asserts if the state matches the fake provider method
+		and sets a fake session cookie. Redirects back to /authorize.
+		/authorize now finds a session cookie and lets you authorize the request.
+		Create a authorization code in POST /authorize and store it in the repo.
+		Redirect to the redirect_uri with the auth code.
+*/
