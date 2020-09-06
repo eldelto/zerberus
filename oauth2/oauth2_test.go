@@ -46,25 +46,25 @@ func TestService_Authorize(t *testing.T) {
 	}
 
 	type test struct {
-		input       AuthorizationRequest
-		expected    AuthorizationResponse
-		expectError bool
+		input   AuthorizationRequest
+		want    AuthorizationResponse
+		wantErr error
 	}
 
 	tests := []test{
-		{validRequest, validResponse, false},
-		{requestWithUnkownClientID, AuthorizationResponse{}, true},
-		{requestWithBadRedirectURI, AuthorizationResponse{}, true},
-		{requestWithBadScope, AuthorizationResponse{}, true},
+		{validRequest, validResponse, nil},
+		{requestWithUnkownClientID, AuthorizationResponse{}, &NotFoundError{}},
+		{requestWithBadRedirectURI, AuthorizationResponse{}, &ClientValidationError{}},
+		{requestWithBadScope, AuthorizationResponse{}, &ClientValidationError{}},
 	}
 
 	for _, tt := range tests {
 		result, err := service.Authorize(tt.input)
-		AssertEquals(t, tt.expectError, err != nil, "service.Authorize error")
+		AssertTypeEquals(t, tt.wantErr, err, "service.Authorize error")
 		if err == nil {
 			AssertNotEquals(t, "", result.Code, "result.Code")
-			tt.expected.Code = result.Code
-			AssertEquals(t, tt.expected, result, "service.Authorize result")
+			tt.want.Code = result.Code
+			AssertEquals(t, tt.want, result, "service.Authorize result")
 		}
 	}
 }

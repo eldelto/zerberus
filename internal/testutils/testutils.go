@@ -33,6 +33,12 @@ func AssertContains(t *testing.T, expected interface{}, testee []interface{}, ti
 	t.Errorf("%s did not contain a value '%v': %v", title, expected, testee)
 }
 
+func AssertTypeEquals(t *testing.T, expected interface{}, actual interface{}, title string) {
+	expectedType := reflect.TypeOf(expected)
+	actualType := reflect.TypeOf(actual)
+	AssertEquals(t, expectedType, actualType, title)
+}
+
 type Response struct {
 	response   *http.Response
 	T          *testing.T

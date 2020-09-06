@@ -26,7 +26,7 @@ func configureFlags(api *operations.ZerberusAPI) {
 }
 
 func configureAPI(api *operations.ZerberusAPI) http.Handler {
-	repo.StoreClientConfiguration(testConfig)
+	authRepository.StoreClientConfiguration(testConfig)
 
 	// configure the api here
 	api.ServeError = errors.ServeError
@@ -56,10 +56,11 @@ func configureAPI(api *operations.ZerberusAPI) http.Handler {
 			State:        params.State,
 		}
 
-		err := service.ValidateAuthorizationRequest(request)
+		err := authService.ValidateAuthorizationRequest(request)
 		if err != nil {
 			// TODO: Return the error as URL parameter
 			//       Will probably need a custom Responder implementation => overwrite ServeError
+			//			 Don't redirect if the redirect_uri isn't valid
 			return newRedirect(request.RedirectURI)
 		}
 
@@ -86,7 +87,7 @@ func configureAPI(api *operations.ZerberusAPI) http.Handler {
 			cookie := http.Cookie{
 				Name:     "authorizationQuery",
 				Value:    authorizationRequestToQuery(request),
-				MaxAge: 5 * 60,
+				MaxAge:   5 * 60,
 				HttpOnly: true,
 				Secure:   true,
 			}
@@ -185,16 +186,5 @@ var testConfig = oauth2.ClientConfiguration{
 	ClientSecret: "secret",
 }
 
-var repo = persistence.NewInMemoryRepository()
-var service = oauth2.NewService(repo)
-
-// http://localhost:8080/v1/authorize?client_id=solvent&response_type=code&redirect_uri=https://www.eldelto.net/solvent&scope=read&state=123
-
-/* 	TODO
-	 	Create FakeLoginProvider endpoint which calls our callback URL
-		Create a callback handler which asserts if the state matches the fake provider method
-		and sets a fake session cookie. Redirects back to /authorize.
-		/authorize now finds a session cookie and lets you authorize the request.
-		Create a authorization code in POST /authorize and store it in the repo.
-		Redirect to the redirect_uri with the auth code.
-*/
+var authRepository = persistence.NewInMemoryRepository()
+var authService = oauth2.NewService(authRepository)

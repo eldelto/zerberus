@@ -4,7 +4,7 @@ import (
 	"github.com/eldelto/zerberus/oauth2"
 )
 
-type InMemoryRepository struct{
+type InMemoryRepository struct {
 	store map[string]oauth2.ClientConfiguration
 }
 
