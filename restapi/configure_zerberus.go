@@ -12,9 +12,11 @@ import (
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"
 
+	"github.com/eldelto/zerberus/authentication"
+	authnPersistence "github.com/eldelto/zerberus/authentication/persistence"
 	"github.com/eldelto/zerberus/internal/html"
 	"github.com/eldelto/zerberus/oauth2"
-	"github.com/eldelto/zerberus/oauth2/persistence"
+	oauth2Persistence "github.com/eldelto/zerberus/oauth2/persistence"
 	"github.com/eldelto/zerberus/restapi/operations"
 	"github.com/eldelto/zerberus/restapi/operations/o_auth2"
 )
@@ -64,12 +66,15 @@ func configureAPI(api *operations.ZerberusAPI) http.Handler {
 			return newRedirect(request.RedirectURI)
 		}
 
-		_, err = params.HTTPRequest.Cookie("ZSC")
+		sessionCookie, err := params.HTTPRequest.Cookie("ZSC")
 		if err != nil {
 			return newAuthenticateRedirect(request)
 		}
 
-		// TODO: Validate session cookie existance otherwise redirect to /authenticate
+		err = authnService.ValidateSession(sessionCookie.Value)
+		if err != nil {
+			return newAuthenticateRedirect(request)
+		}
 
 		return html.NewTemplateProvider("assets/templates/authorize.html", request)
 	})
@@ -186,5 +191,8 @@ var testConfig = oauth2.ClientConfiguration{
 	ClientSecret: "secret",
 }
 
-var authRepository = persistence.NewInMemoryRepository()
+var authRepository = oauth2Persistence.NewInMemoryRepository()
 var authService = oauth2.NewService(authRepository)
+
+var authnRepository = authnPersistence.NewInMemoryRepository()
+var authnService = authentication.NewService(authnRepository)

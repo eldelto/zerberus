@@ -4,9 +4,10 @@
 - [ ] GET /authorize
   - [x] Validate AuthorizationRequest
     - [x] Create service methods
-  - [ ] Check cookie `ZSC` and validate against DB
+  - [x] Check cookie `ZSC` and validate against DB
     - [x] Create service methods
-  - [ ] Redirect to GET /authenticate (if no / invalid cookie)
+  - [x] Redirect to GET /authenticate (if no / invalid cookie)
+  Continue @ GET /authenticate
   - [ ] Display consens form -> POST /authorize (if logged in)
   - [ ] Return errors in query (if an error occurs and `redirect_uri` is set)
 
