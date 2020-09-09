@@ -19,21 +19,23 @@
   - [ ] Redirect to `redirect_uri` (on success)
 
 - [ ] GET /authenticate
-  - [ ] Check cookie `ZSC` and validate against DB
-  - [ ] Redirect to GET /logout (if cookie already present)
-  - [ ] Display login provider form
-  - [ ] Create session
+  - [x] Check cookie `ZSC` and validate against DB
+  - [x] Redirect to GET /logout (if cookie already present)
+  - [x] Display login provider form
+  - [x] Create session => How to differentiate between anonymous and authenticated session?
+  - [ ] Fix cookie persistence across requests
+  - [ ] Change validate session to return an error on anonymous sessions?
   - [ ] Generate and persist `AuthenticationRequest {
-                               authorizationRequest
-                               sessionId
-                               authenticationId
-                               state
-                             }` (should only be valid for 5 min)
+                                id    // To not send the sessionID in the OAuth request
+                                state
+                                sessionID
+                                authorizationRequest
+                              }` (should only be valid for 5 min)
 - [ ] GET /authenticate/callback
   - [ ] Retrieve authorization code
   - [ ] Exchange code to token
   - [ ] Get user information
-  - [ ] Map user information to sessionId
+  - [ ] Map user information to sessionID
   - [ ] Redirect to GET /logout (on success, if no authorization request exists)
   - [ ] Redirect to GET /authorize (on success, if authorization request exists)
   - [ ] Redirect to GET /authenticate and display errors (on failure)

@@ -58,8 +58,7 @@ func configureAPI(api *operations.ZerberusAPI) http.Handler {
 			State:        params.State,
 		}
 
-		err := authService.ValidateAuthorizationRequest(request)
-		if err != nil {
+		if err := authService.ValidateAuthorizationRequest(request); err != nil {
 			// TODO: Return the error as URL parameter
 			//       Will probably need a custom Responder implementation => overwrite ServeError
 			//			 Don't redirect if the redirect_uri isn't valid
@@ -71,8 +70,7 @@ func configureAPI(api *operations.ZerberusAPI) http.Handler {
 			return newAuthenticateRedirect(request)
 		}
 
-		err = authnService.ValidateSession(sessionCookie.Value)
-		if err != nil {
+		if err = authnService.ValidateSession(sessionCookie.Value); err != nil {
 			return newAuthenticateRedirect(request)
 		}
 
@@ -80,19 +78,29 @@ func configureAPI(api *operations.ZerberusAPI) http.Handler {
 	})
 
 	api.OAuth2AuthenticateHandler = o_auth2.AuthenticateHandlerFunc(func(params o_auth2.AuthenticateParams) middleware.Responder {
-		request := oauth2.AuthorizationRequest{
+
+		sessionCookie, err := params.HTTPRequest.Cookie("ZSC")
+		if err == nil {
+			if err = authnService.ValidateSession(sessionCookie.Value); err == nil {
+				return newRedirect("/v1/logout")
+			}
+		}
+
+		session, err := authnService.CreateSession()
+
+		/*request := oauth2.AuthorizationRequest{
 			ClientID:     params.ClientID,
 			RedirectURI:  params.RedirectURI,
 			ResponseType: params.ResponseType,
 			Scopes:       extractScopes(*params.Scope),
 			State:        params.State,
-		}
+		}*/
 
 		return middleware.ResponderFunc(func(rw http.ResponseWriter, producer runtime.Producer) {
 			cookie := http.Cookie{
-				Name:     "authorizationQuery",
-				Value:    authorizationRequestToQuery(request),
-				MaxAge:   5 * 60,
+				Name:     "ZSC",
+				Value:    session.ID(),
+				MaxAge:   int(session.Lifetime().Seconds()),
 				HttpOnly: true,
 				Secure:   true,
 			}

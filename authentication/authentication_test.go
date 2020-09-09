@@ -11,16 +11,16 @@ const validSessionID = "111"
 const invalidSessionID = "666"
 const nonExistentSessionID = "000"
 
-var validSession = Session{
-	ID:        validSessionID,
-	CreatedAt: time.Now(),
-	Lifetime:  100 * time.Minute,
+var validSession = &Session{
+	id:        validSessionID,
+	createdAt: time.Now(),
+	lifetime:  100 * time.Minute,
 }
 
-var invalidSession = Session{
-	ID:        validSessionID,
-	CreatedAt: time.Now().AddDate(0, 0, -1),
-	Lifetime:  1 * time.Nanosecond,
+var invalidSession = &Session{
+	id:        validSessionID,
+	createdAt: time.Now().AddDate(0, 0, -1),
+	lifetime:  1 * time.Nanosecond,
 }
 
 var service = NewService(&StubRepository{})
@@ -46,17 +46,17 @@ func TestService_ValidateSession(t *testing.T) {
 
 type StubRepository struct{}
 
-func (r *StubRepository) StoreSession(session Session) error {
+func (r *StubRepository) StoreSession(session *Session) error {
 	return nil
 }
 
-func (r *StubRepository) FetchSession(sessionID string) (Session, error) {
+func (r *StubRepository) FetchSession(sessionID string) (*Session, error) {
 	switch sessionID {
 	case "111":
 		return validSession, nil
 	case "666":
 		return invalidSession, nil
 	default:
-		return Session{}, &InvalidSessionError{SessionID: sessionID}
+		return nil, &InvalidSessionError{SessionID: sessionID}
 	}
 }
