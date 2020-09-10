@@ -9,10 +9,10 @@ import (
 
 // Session represents a user's session on the server.
 type Session struct {
-	id          string
-	createdAt   time.Time
-	lifetime    time.Duration
-	isAnonymous bool
+	id              string
+	createdAt       time.Time
+	lifetime        time.Duration
+	isAuthenticated bool
 }
 
 // ID returns the ID of the session.
@@ -30,9 +30,10 @@ func (s *Session) Lifetime() time.Duration {
 	return s.lifetime
 }
 
-// IsAnonymous returns true if the session belongs to an anonymous user otherwise false.
-func (s *Session) IsAnonymous() bool {
-	return s.isAnonymous
+// IsAuthenticated returns true if the session belongs to an authenticated user
+// otherwise false.
+func (s *Session) IsAuthenticated() bool {
+	return s.isAuthenticated
 }
 
 // IsValid return true if the Session has not yet expired otherwise false.
@@ -43,8 +44,8 @@ func (s *Session) IsValid() bool {
 
 // Repository handles session persistance.
 type Repository interface {
-	StoreSession(session *Session) error
-	FetchSession(sessionID string) (*Session, error)
+	StoreSession(session Session) error
+	FetchSession(sessionID string) (Session, error)
 }
 
 // Service is the entrypoint for all authentication related operations.
@@ -65,18 +66,18 @@ func (s *Service) CreateSession() (*Session, error) {
 		return nil, NewUnknownError(err, "error while generating a new session ID")
 	}
 
-	session := &Session{
-		id:          uuid.String(),
-		createdAt:   time.Now(),
-		lifetime:    time.Hour * 24,
-		isAnonymous: true,
+	session := Session{
+		id:              uuid.String(),
+		createdAt:       time.Now(),
+		lifetime:        time.Hour * 24,
+		isAuthenticated: false,
 	}
 
 	if err = s.repository.StoreSession(session); err != nil {
 		return nil, err
 	}
 
-	return session, nil
+	return &session, nil
 }
 
 // ValidateSession validates the given sessionID.
@@ -91,11 +92,15 @@ func (s *Service) ValidateSession(sessionID string) error {
 		return &InvalidSessionError{sessionID}
 	}
 
+	if !session.isAuthenticated {
+		return &NotAuthenticatedError{sessionID}
+	}
+
 	return nil
 }
 
 /* DRAFT
-func (s *Service) Authenticate(session *Session) (*Session, error)
+func (s *Service) Authenticate(session *Session, provider *AuthenticationProvider) (*Session, error)
 */
 
 // InvalidSessionError indicates that the given session does not exist, has expired
@@ -106,6 +111,16 @@ type InvalidSessionError struct {
 
 func (e *InvalidSessionError) Error() string {
 	return fmt.Sprintf("session '%s' is not valid", e.SessionID)
+}
+
+// NotAuthenticatedError indicates that the given session is not authenticated
+// but anonymous.
+type NotAuthenticatedError struct {
+	SessionID string
+}
+
+func (e *NotAuthenticatedError) Error() string {
+	return fmt.Sprintf("session '%s' is not authenticated", e.SessionID)
 }
 
 // UnknownError indicates that an unexpected error has occured that could not be handled

@@ -23,8 +23,8 @@
   - [x] Redirect to GET /logout (if cookie already present)
   - [x] Display login provider form
   - [x] Create session => How to differentiate between anonymous and authenticated session?
-  - [ ] Fix cookie persistence across requests
-  - [ ] Change validate session to return an error on anonymous sessions?
+  - [x] Fix cookie persistence across requests
+  - [x] Change validate session to return an error on anonymous sessions
   - [ ] Generate and persist `AuthenticationRequest {
                                 id    // To not send the sessionID in the OAuth request
                                 state

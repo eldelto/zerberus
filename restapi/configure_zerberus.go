@@ -101,8 +101,9 @@ func configureAPI(api *operations.ZerberusAPI) http.Handler {
 				Name:     "ZSC",
 				Value:    session.ID(),
 				MaxAge:   int(session.Lifetime().Seconds()),
+				SameSite: http.SameSiteStrictMode,
 				HttpOnly: true,
-				Secure:   true,
+				//Secure:   true,	// Disabled because localy we don't use TLS
 			}
 			http.SetCookie(rw, &cookie)
 
