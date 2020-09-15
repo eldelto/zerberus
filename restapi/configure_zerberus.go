@@ -78,15 +78,12 @@ func configureAPI(api *operations.ZerberusAPI) http.Handler {
 	})
 
 	api.OAuth2AuthenticateHandler = o_auth2.AuthenticateHandlerFunc(func(params o_auth2.AuthenticateParams) middleware.Responder {
-
 		sessionCookie, err := params.HTTPRequest.Cookie("ZSC")
 		if err == nil {
 			if err = authnService.ValidateSession(sessionCookie.Value); err == nil {
 				return newRedirect("/v1/logout")
 			}
 		}
-
-		session, err := authnService.CreateSession()
 
 		/*request := oauth2.AuthorizationRequest{
 			ClientID:     params.ClientID,
@@ -96,20 +93,7 @@ func configureAPI(api *operations.ZerberusAPI) http.Handler {
 			State:        params.State,
 		}*/
 
-		return middleware.ResponderFunc(func(rw http.ResponseWriter, producer runtime.Producer) {
-			cookie := http.Cookie{
-				Name:     "ZSC",
-				Value:    session.ID(),
-				MaxAge:   int(session.Lifetime().Seconds()),
-				SameSite: http.SameSiteStrictMode,
-				HttpOnly: true,
-				//Secure:   true,	// Disabled because localy we don't use TLS
-			}
-			http.SetCookie(rw, &cookie)
-
-			webutils.NewTemplateProvider("assets/templates/authenticate.html", nil).WriteResponse(rw, producer)
-		})
-
+		return webutils.NewTemplateProvider("assets/templates/authenticate.html", nil)
 	})
 
 	api.OAuth2CreateAuthorizationHandler = o_auth2.CreateAuthorizationHandlerFunc(func(params o_auth2.CreateAuthorizationParams) middleware.Responder {
@@ -147,7 +131,7 @@ func configureServer(s *http.Server, scheme, addr string) {
 // The middleware configuration is for the handler executors. These do not apply to the swagger.json document.
 // The middleware executes after routing but before authentication, binding and validation
 func setupMiddlewares(handler http.Handler) http.Handler {
-	return handler
+	return sessionMiddleware.Wrap(handler)
 }
 
 // The middleware configuration happens before anything, this middleware also applies to serving the swagger.json document.
@@ -187,10 +171,10 @@ func newAuthenticateRedirect(request oauth2.AuthorizationRequest) *Redirect {
 	return newRedirect(location)
 }
 
-func (r *Redirect) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
-	rw.Header().Del(runtime.HeaderContentType) //Remove Content-Type on empty responses
-	rw.Header().Add("Location", r.location)
-	rw.WriteHeader(302)
+func (r *Redirect) WriteResponse(w http.ResponseWriter, producer runtime.Producer) {
+	w.Header().Del(runtime.HeaderContentType) //Remove Content-Type on empty responses
+	w.Header().Add("Location", r.location)
+	w.WriteHeader(302)
 }
 
 var testConfig = oauth2.ClientConfiguration{
@@ -205,3 +189,5 @@ var authService = oauth2.NewService(authRepository)
 
 var authnRepository = authnPersistence.NewInMemoryRepository()
 var authnService = authentication.NewService(authnRepository)
+
+var sessionMiddleware = webutils.NewSessionMiddleware(authnService)
