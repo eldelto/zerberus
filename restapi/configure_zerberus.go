@@ -14,7 +14,7 @@ import (
 
 	"github.com/eldelto/zerberus/authentication"
 	authnPersistence "github.com/eldelto/zerberus/authentication/persistence"
-	"github.com/eldelto/zerberus/internal/html"
+	"github.com/eldelto/zerberus/internal/webutils"
 	"github.com/eldelto/zerberus/oauth2"
 	oauth2Persistence "github.com/eldelto/zerberus/oauth2/persistence"
 	"github.com/eldelto/zerberus/restapi/operations"
@@ -45,7 +45,7 @@ func configureAPI(api *operations.ZerberusAPI) http.Handler {
 
 	api.UrlformConsumer = runtime.DiscardConsumer
 
-	api.HTMLProducer = html.HTMLProducer
+	api.HTMLProducer = webutils.HTMLProducer
 
 	api.JSONProducer = runtime.JSONProducer()
 
@@ -74,7 +74,7 @@ func configureAPI(api *operations.ZerberusAPI) http.Handler {
 			return newAuthenticateRedirect(request)
 		}
 
-		return html.NewTemplateProvider("assets/templates/authorize.html", request)
+		return webutils.NewTemplateProvider("assets/templates/authorize.html", request)
 	})
 
 	api.OAuth2AuthenticateHandler = o_auth2.AuthenticateHandlerFunc(func(params o_auth2.AuthenticateParams) middleware.Responder {
@@ -107,7 +107,7 @@ func configureAPI(api *operations.ZerberusAPI) http.Handler {
 			}
 			http.SetCookie(rw, &cookie)
 
-			html.NewTemplateProvider("assets/templates/authenticate.html", nil).WriteResponse(rw, producer)
+			webutils.NewTemplateProvider("assets/templates/authenticate.html", nil).WriteResponse(rw, producer)
 		})
 
 	})

@@ -1,4 +1,4 @@
-package html
+package webutils
 
 import (
 	"fmt"
@@ -9,13 +9,17 @@ import (
 	"github.com/go-openapi/runtime"
 )
 
+// HTMLProducer is the default producer implementation for HTML response bodies.
 var HTMLProducer = runtime.ProducerFunc(htmlProducerFunc)
 
+// TemplateProvider represents a template fill with the corresponding data to fill it.
 type TemplateProvider struct {
 	templatePath string
 	data         interface{}
 }
 
+// NewTemplateProvider returns a new instance of TemplateProvider with the given
+// templatePath and data.
 func NewTemplateProvider(templatePath string, data interface{}) *TemplateProvider {
 	return &TemplateProvider{
 		templatePath: templatePath,
@@ -23,6 +27,7 @@ func NewTemplateProvider(templatePath string, data interface{}) *TemplateProvide
 	}
 }
 
+// WriteResponse writes the rendered HTML template to the response.
 func (t *TemplateProvider) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
 	rw.Header().Del(runtime.HeaderContentType)
 	rw.WriteHeader(200)
@@ -51,6 +56,7 @@ func htmlProducerFunc(w io.Writer, data interface{}) error {
 	return nil
 }
 
+// NoTemplateProviderError indicates that the response provider is not a TemplateProvider.
 type NoTemplateProviderError struct {
 	message string
 }
@@ -63,6 +69,7 @@ func (e *NoTemplateProviderError) Error() string {
 	return e.message
 }
 
+// TemplateError indicates that a template related error occured (e.g. parsing failed).
 type TemplateError struct {
 	message string
 	err     error
