@@ -92,6 +92,22 @@ func (s *Service) ValidateSession(sessionID string) error {
 		return &InvalidSessionError{sessionID}
 	}
 
+	return nil
+}
+
+// ValidateAuthentication validates the given sessionID and ensures that the session
+// has a valid authentication.
+// It returns nil if the session is valid otherwise the respective error is returned.
+func (s *Service) ValidateAuthentication(sessionID string) error {
+	session, err := s.repository.FetchSession(sessionID)
+	if err != nil {
+		return err
+	}
+
+	if !session.IsValid() {
+		return &InvalidSessionError{sessionID}
+	}
+
 	if !session.isAuthenticated {
 		return &NotAuthenticatedError{sessionID}
 	}

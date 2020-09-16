@@ -80,7 +80,7 @@ func configureAPI(api *operations.ZerberusAPI) http.Handler {
 	api.OAuth2AuthenticateHandler = o_auth2.AuthenticateHandlerFunc(func(params o_auth2.AuthenticateParams) middleware.Responder {
 		sessionCookie, err := params.HTTPRequest.Cookie("ZSC")
 		if err == nil {
-			if err = authnService.ValidateSession(sessionCookie.Value); err == nil {
+			if err = authnService.ValidateAuthentication(sessionCookie.Value); err == nil {
 				return newRedirect("/v1/logout")
 			}
 		}

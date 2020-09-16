@@ -24,12 +24,16 @@ func NewSessionMiddleware(service *authentication.Service) *SessionMiddleware {
 // before executing the passed in handler.
 func (m *SessionMiddleware) Wrap(handler http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if _, err := r.Cookie(SessionCookieKey); err == nil {
-			// TODO: Validate session and create a new one if invalid
-			handler.ServeHTTP(w, r)
-			return
+
+		if cookie, err := r.Cookie(SessionCookieKey); err == nil {
+			// Validate session if cookie is set
+			if err = m.service.ValidateSession(cookie.Value); err == nil {
+				handler.ServeHTTP(w, r)
+				return
+			}
 		}
 
+		// Otherwise create a new session
 		session, err := m.service.CreateSession()
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)

@@ -36,7 +36,25 @@ var invalidSession = Session{
 var service = NewService(&StubRepository{})
 
 func TestService_ValidateSession(t *testing.T) {
+	tests := []struct {
+		name      string
+		sessionID string
+		wantErr   error
+	}{
+		{"valid sessionID", validSessionID, nil},
+		{"invalid sessionID", invalidSessionID, &InvalidSessionError{}},
+		{"non-existent sessionID", nonExistentSessionID, &InvalidSessionError{}},
+	}
 
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := service.ValidateSession(tt.sessionID)
+			AssertTypeEquals(t, tt.wantErr, err, "service.Authorize error")
+		})
+	}
+}
+
+func TestService_ValidateAuthentication(t *testing.T) {
 	tests := []struct {
 		name      string
 		sessionID string
@@ -50,7 +68,7 @@ func TestService_ValidateSession(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := service.ValidateSession(tt.sessionID)
+			err := service.ValidateAuthentication(tt.sessionID)
 			AssertTypeEquals(t, tt.wantErr, err, "service.Authorize error")
 		})
 	}
