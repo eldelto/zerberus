@@ -54,6 +54,10 @@ func (m *SessionMiddleware) Wrap(handler http.Handler) http.HandlerFunc {
 	}
 }
 
+// ReferrerHeaderKey is the name of the header which stores the original URI before
+// being redirected to the authentication URI.
+const ReferrerHeaderKey = "Z-Referrer"
+
 // AuthnMiddleware represents a middleware to check for a valid authenticated session
 // and otherwise redirects to the authenURI.
 type AuthnMiddleware struct {
@@ -96,6 +100,7 @@ func (m *AuthnMiddleware) Wrap(handler http.Handler) http.HandlerFunc {
 
 func redirect(location string, w http.ResponseWriter, r *http.Request) {
 	w.Header().Del("Content-Type") //Remove Content-Type on empty responses
-	w.Header().Add("Location", location+"?"+r.URL.RawQuery)
+	w.Header().Add("Location", location)
+	w.Header().Add(ReferrerHeaderKey, r.RequestURI)
 	w.WriteHeader(302)
 }
