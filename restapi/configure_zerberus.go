@@ -4,7 +4,6 @@ package restapi
 
 import (
 	"crypto/tls"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -65,15 +64,6 @@ func configureAPI(api *operations.ZerberusAPI) http.Handler {
 			return newRedirect(request.RedirectURI)
 		}
 
-		sessionCookie, err := params.HTTPRequest.Cookie("ZSC")
-		if err != nil {
-			return newAuthenticateRedirect(request)
-		}
-
-		if err = authnService.ValidateSession(sessionCookie.Value); err != nil {
-			return newAuthenticateRedirect(request)
-		}
-
 		return webutils.NewTemplateProvider("assets/templates/authorize.html", request)
 	})
 
@@ -131,7 +121,8 @@ func configureServer(s *http.Server, scheme, addr string) {
 // The middleware configuration is for the handler executors. These do not apply to the swagger.json document.
 // The middleware executes after routing but before authentication, binding and validation
 func setupMiddlewares(handler http.Handler) http.Handler {
-	return sessionMiddleware.Wrap(handler)
+	return sessionMiddleware.Wrap(
+		authnMiddleware.Wrap(handler))
 }
 
 // The middleware configuration happens before anything, this middleware also applies to serving the swagger.json document.
@@ -149,26 +140,12 @@ func extractScopes(scopeString string) []string {
 	return scopes
 }
 
-func authorizationRequestToQuery(request oauth2.AuthorizationRequest) string {
-	return fmt.Sprintf("?client_id=%s&redirect_uri=%s&scope=%s&response_type=%s&state=%s",
-		request.ClientID,
-		request.RedirectURI,
-		strings.Join(request.Scopes, ","),
-		request.ResponseType,
-		request.State)
-}
-
 type Redirect struct {
 	location string
 }
 
 func newRedirect(location string) *Redirect {
 	return &Redirect{location}
-}
-
-func newAuthenticateRedirect(request oauth2.AuthorizationRequest) *Redirect {
-	location := "/v1/authenticate" + authorizationRequestToQuery(request)
-	return newRedirect(location)
 }
 
 func (r *Redirect) WriteResponse(w http.ResponseWriter, producer runtime.Producer) {
@@ -191,3 +168,4 @@ var authnRepository = authnPersistence.NewInMemoryRepository()
 var authnService = authentication.NewService(authnRepository)
 
 var sessionMiddleware = webutils.NewSessionMiddleware(authnService)
+var authnMiddleware = webutils.NewAuthnMiddleware(authnService, "/v1/authenticate")

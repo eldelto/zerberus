@@ -27,7 +27,7 @@
   - [x] Change validate session to return an error on anonymous sessions
   - [x] Add middleware to check for session and create one if absent
   - [x] Enhance middleware to validate existing session and create one if invalid
-  - [ ] Add middleware to check for authenticated session or else redirect to /authenticate
+  - [x] Add middleware to check for authenticated session or else redirect to /authenticate
   - [ ] Generate and persist `AuthenticationRequest {
                                 id    // To not send the sessionID in the OAuth request
                                 state
