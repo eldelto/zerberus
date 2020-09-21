@@ -116,7 +116,35 @@ func (s *Service) ValidateAuthentication(sessionID string) error {
 }
 
 /* DRAFT
-func (s *Service) Authenticate(session *Session, provider *AuthenticationProvider) (*Session, error)
+func (s *Service) InitAuth(session Session, providerKey string) error
+func (s *Service) HandleCallback(response AuthenticationResponse) (Session, error)
+
+var loginProviderMapping [string]LoginProvider
+
+func RegisterLoginProvider(key string, provider LoginProvider) error
+	=> Returns an error if a provider with the same key already exists
+
+type LoginProvider interface {
+	InitLogin(session Session) error 
+		=> Makes the call to the third party authentication
+	HandleCallback(response AuthenticationResponse, session Session) error
+		=> No error means that the user is ready to be logged in
+}
+
+type FakeLoginProvider struct {}
+
+func InitLogin(w http.ResponseWriter) error {
+	w.Header("Location", "/v1/callback")
+
+	return nil
+}
+
+func HandleCallback(authorizationCode string) error {
+	// TODO: Check for fake authorization code
+
+	return nil
+}
+
 */
 
 // InvalidSessionError indicates that the given session does not exist, has expired

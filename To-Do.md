@@ -29,11 +29,13 @@
   - [x] Enhance middleware to validate existing session and create one if invalid
   - [x] Add middleware to check for authenticated session or else redirect to /authenticate
   - [ ] Generate and persist `AuthenticationRequest {
-                                id    // To not send the sessionID in the OAuth request
-                                state
-                                sessionID
-                                authorizationRequest
-                                referrer?
+                                ID    // To not send the sessionID in the OAuth request
+                                State
+                                SessionID
+                                Seferrer
+                                Type
+                                CreatedAt
+                                Lifetime
                               }` (should only be valid for 5 min)
 - [ ] GET /authenticate/callback
   - [ ] Retrieve authorization code
