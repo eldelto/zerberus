@@ -18,7 +18,7 @@
   - [ ] Return errors in query (if an error occurs and `redirect_uri` is set)
   - [ ] Redirect to `redirect_uri` (on success)
 
-- [ ] GET /authenticate
+- [x] GET /authenticate
   - [x] Check cookie `ZSC` and validate against DB
   - [x] Redirect to GET /logout (if cookie already present)
   - [x] Display login provider form
@@ -28,12 +28,14 @@
   - [x] Add middleware to check for session and create one if absent
   - [x] Enhance middleware to validate existing session and create one if invalid
   - [x] Add middleware to check for authenticated session or else redirect to /authenticate
+
+- [ ] POST /authenticate
   - [ ] Generate and persist `AuthenticationRequest {
                                 ID    // To not send the sessionID in the OAuth request
                                 State
                                 SessionID
-                                Seferrer
-                                Type
+                                RedirectURI
+                                Provider
                                 CreatedAt
                                 Lifetime
                               }` (should only be valid for 5 min)

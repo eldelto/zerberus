@@ -2,6 +2,7 @@ package authentication
 
 import (
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/google/uuid"
@@ -47,6 +48,45 @@ type Repository interface {
 	StoreSession(session Session) error
 	FetchSession(sessionID string) (Session, error)
 }
+
+/* DRAFT
+func (s *Service) InitAuth(request AuthenticationRequest,  w http.ResponseWriter) error {
+	session, err := s.repository.FetchSession(request.SessionID)
+	if err != nil {
+		return InvalidSessionError
+	}
+
+	s.ValidateAuthentication(session) == nil {
+		w.Header().Add("Location", request.RedirectURI)
+		return nil
+	}
+
+	provider, ok := s.loginProviders[request.Provider]
+	if !ok {
+		return ValidationError
+	}
+
+	err = s.repository.StoreAuthenticationRequest(request); err != nil {
+		return err
+	}
+
+	return provider.InitLogin(w)
+}
+
+func (s *Service) HandleCallback(session Session, response AuthenticationResponse) (Session, error)
+
+var loginProviderMapping [string]LoginProvider
+
+func RegisterLoginProvider(key string, provider LoginProvider) error
+	=> Returns an error if a provider with the same key already exists
+}
+*/
+
+type LoginProvider interface {
+	InitLogin(w http.ResponseWriter) error
+	HandleCallback(authorizationCode string) error
+}
+
 
 // Service is the entrypoint for all authentication related operations.
 type Service struct {
@@ -115,38 +155,6 @@ func (s *Service) ValidateAuthentication(sessionID string) error {
 	return nil
 }
 
-/* DRAFT
-func (s *Service) InitAuth(session Session, providerKey string) error
-func (s *Service) HandleCallback(response AuthenticationResponse) (Session, error)
-
-var loginProviderMapping [string]LoginProvider
-
-func RegisterLoginProvider(key string, provider LoginProvider) error
-	=> Returns an error if a provider with the same key already exists
-
-type LoginProvider interface {
-	InitLogin(session Session) error 
-		=> Makes the call to the third party authentication
-	HandleCallback(response AuthenticationResponse, session Session) error
-		=> No error means that the user is ready to be logged in
-}
-
-type FakeLoginProvider struct {}
-
-func InitLogin(w http.ResponseWriter) error {
-	w.Header("Location", "/v1/callback")
-
-	return nil
-}
-
-func HandleCallback(authorizationCode string) error {
-	// TODO: Check for fake authorization code
-
-	return nil
-}
-
-*/
-
 // InvalidSessionError indicates that the given session does not exist, has expired
 // or is invalid in any other way.
 type InvalidSessionError struct {
@@ -165,6 +173,26 @@ type NotAuthenticatedError struct {
 
 func (e *NotAuthenticatedError) Error() string {
 	return fmt.Sprintf("session '%s' is not authenticated", e.SessionID)
+}
+
+// CallbackError indicates that the given LoginProvider encountered a problem while
+// processing the callback request.
+type CallbackError struct {
+	Provider LoginProvider
+	message string
+}
+
+// NewCallbackError returns a new CallbackError for the given LoginProvider with the
+// specified message.
+func NewCallbackError(provider LoginProvider, message string) error {
+	return &CallbackError{
+		Provider: provider,
+		message: message,
+	}
+}
+
+func (e *CallbackError) Error() string {
+	return fmt.Sprintf("error while handling callback: %s", e.message)
 }
 
 // UnknownError indicates that an unexpected error has occured that could not be handled
