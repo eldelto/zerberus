@@ -31,3 +31,8 @@ func (r *InMemoryRepository) FetchSession(sessionID string) (authentication.Sess
 
 	return session, nil
 }
+
+func (r *InMemoryRepository) StoreAuthenticationRequest(request authentication.AuthenticationRequest) error {
+	// TODO: Implement
+	return nil
+}

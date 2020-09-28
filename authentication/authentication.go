@@ -3,6 +3,7 @@ package authentication
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/google/uuid"
@@ -43,37 +44,67 @@ func (s *Session) IsValid() bool {
 	return expirationTime.After(time.Now())
 }
 
+type AuthenticationRequest struct {
+	id          string
+	state       string
+	sessionID   string
+	redirectURL url.URL
+	provider    string
+	createdAt   time.Time
+	lifetime    time.Duration
+}
+
+func NewAuthenticationRequest(sessionID string, redirectURL url.URL, provider string) (AuthenticationRequest, error) {
+	id, err := uuid.NewRandom()
+	if err != nil {
+		return AuthenticationRequest{}, NewUnknownError(err, "error while generating a new AuthenticationRequest ID")
+	}
+
+	state, err := uuid.NewRandom()
+	if err != nil {
+		return AuthenticationRequest{}, NewUnknownError(err, "error while generating a new AuthenticationRequest state")
+	}
+
+	request := AuthenticationRequest{
+		id:          id.String(),
+		state:       state.String(),
+		sessionID:   sessionID,
+		redirectURL: redirectURL,
+		provider:    provider,
+		createdAt:   time.Now(),
+		lifetime:    time.Minute * 5,
+	}
+
+	return request, nil
+}
+
 // Repository handles session persistance.
 type Repository interface {
 	StoreSession(session Session) error
 	FetchSession(sessionID string) (Session, error)
+	StoreAuthenticationRequest(request AuthenticationRequest) error
 }
 
 /* DRAFT
-func (s *Service) InitAuth(request AuthenticationRequest,  w http.ResponseWriter) error {
-	session, err := s.repository.FetchSession(request.SessionID)
-	if err != nil {
-		return InvalidSessionError
+
+
+func (s *Service) HandleCallback(session Session, response AuthenticationResponse) (Session, error) {
+	// Checks state, type against stored AuthenticationRequest
+	if err := validateAuthenticationResponse(session, response); err != nil {
+		return Session{}, err
 	}
 
-	s.ValidateAuthentication(session) == nil {
-		w.Header().Add("Location", request.RedirectURI)
-		return nil
-	}
-
-	provider, ok := s.loginProviders[request.Provider]
+	provider, ok := s.providers[response.Provider]
 	if !ok {
 		return ValidationError
 	}
 
-	err = s.repository.StoreAuthenticationRequest(request); err != nil {
-		return err
+	if err = provider.HandleCallback(reponse.AuthenticationCode); err != nil {
+		return Session{}, err
 	}
 
-	return provider.InitLogin(w)
+	return s.createAuthenticatedSession
 }
-
-func (s *Service) HandleCallback(session Session, response AuthenticationResponse) (Session, error)
 
 var loginProviderMapping [string]LoginProvider
 
@@ -87,15 +118,18 @@ type LoginProvider interface {
 	HandleCallback(authorizationCode string) error
 }
 
-
 // Service is the entrypoint for all authentication related operations.
 type Service struct {
-	repository Repository
+	repository     Repository
+	loginProviders map[string]LoginProvider
 }
 
 // NewService return a new instance of Service using the given Repository implementation.
 func NewService(repository Repository) *Service {
-	return &Service{repository}
+	return &Service{
+		repository:     repository,
+		loginProviders: map[string]LoginProvider{},
+	}
 }
 
 // CreateSession creates a new anonymous session and stores it in the repository.
@@ -155,6 +189,42 @@ func (s *Service) ValidateAuthentication(sessionID string) error {
 	return nil
 }
 
+func (s *Service) RegisterLoginProvider(provider LoginProvider, key string) error {
+	_, ok := s.loginProviders[key]
+	if ok {
+		msg := fmt.Sprintf("LoginProvider with key '%s' is already registered", key)
+		return &ConfigurationError{msg}
+	}
+
+	s.loginProviders[key] = provider
+
+	return nil
+}
+
+func (s *Service) InitAuthentication(request AuthenticationRequest, w http.ResponseWriter) error {
+	session, err := s.repository.FetchSession(request.sessionID)
+	if err != nil {
+		return &InvalidSessionError{request.sessionID}
+	}
+
+	if s.ValidateAuthentication(session.id) == nil {
+		w.Header().Add("Location", request.redirectURL.String())
+		return nil
+	}
+
+	provider, ok := s.loginProviders[request.provider]
+	if !ok {
+		msg := fmt.Sprintf("provider with key '%s' is not registered", request.provider)
+		return &ConfigurationError{msg}
+	}
+
+	if err = s.repository.StoreAuthenticationRequest(request); err != nil {
+		return err
+	}
+
+	return provider.InitLogin(w)
+}
+
 // InvalidSessionError indicates that the given session does not exist, has expired
 // or is invalid in any other way.
 type InvalidSessionError struct {
@@ -179,7 +249,7 @@ func (e *NotAuthenticatedError) Error() string {
 // processing the callback request.
 type CallbackError struct {
 	Provider LoginProvider
-	message string
+	message  string
 }
 
 // NewCallbackError returns a new CallbackError for the given LoginProvider with the
@@ -187,12 +257,20 @@ type CallbackError struct {
 func NewCallbackError(provider LoginProvider, message string) error {
 	return &CallbackError{
 		Provider: provider,
-		message: message,
+		message:  message,
 	}
 }
 
 func (e *CallbackError) Error() string {
 	return fmt.Sprintf("error while handling callback: %s", e.message)
+}
+
+type ConfigurationError struct {
+	message string
+}
+
+func (e *ConfigurationError) Error() string {
+	return e.message
 }
 
 // UnknownError indicates that an unexpected error has occured that could not be handled
