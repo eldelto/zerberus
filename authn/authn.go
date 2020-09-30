@@ -88,17 +88,20 @@ type Repository interface {
 }
 
 /* DRAFT
+type Response struct {
+	ID string
+	SessionID string
+	State string
+	AuthorizationCode string
+}
 
+// TODO: How to handle the redirect and setting of the session cookie?
 
-func (s *Service) HandleCallback(session Session, response AuthnResponse) (Session, error) {
-	// Checks state, type against stored Request
-	if err := validateAuthnResponse(session, response); err != nil {
+func (s *Service) HandleCallback(response Response) (Session, error) {
+	// Checks session, id, state & type against stored Request
+	provider, err := s.validateAuthnResponse(response)
+	if err != nil {
 		return Session{}, err
-	}
-
-	provider, ok := s.providers[response.Provider]
-	if !ok {
-		return ValidationError
 	}
 
 	if err = provider.HandleCallback(reponse.AuthnCode); err != nil {
@@ -106,12 +109,6 @@ func (s *Service) HandleCallback(session Session, response AuthnResponse) (Sessi
 	}
 
 	return s.createAuthenticatedSession
-}
-
-var loginProviderMapping [string]LoginProvider
-
-func RegisterLoginProvider(key string, provider LoginProvider) error
-	=> Returns an error if a provider with the same key already exists
 }
 */
 
