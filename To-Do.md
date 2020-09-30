@@ -30,7 +30,7 @@
   - [x] Add middleware to check for authenticated session or else redirect to /authenticate
 
 - [ ] POST /authenticate
-  - [ ] Generate and persist `AuthenticationRequest {
+  - [x] Generate and persist `AuthenticationRequest {
                                 ID    // To not send the sessionID in the OAuth request
                                 State
                                 SessionID
@@ -39,6 +39,7 @@
                                 CreatedAt
                                 Lifetime
                               }` (should only be valid for 5 min)
+  - [ ] Implement the actual endpoint
 - [ ] GET /authenticate/callback
   - [ ] Retrieve authorization code
   - [ ] Exchange code to token

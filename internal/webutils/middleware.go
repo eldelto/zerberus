@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/eldelto/zerberus/authentication"
+	"github.com/eldelto/zerberus/authn"
 )
 
 // SessionCookieKey is the name of the session cookie used by Zerberus.
@@ -13,12 +13,12 @@ const SessionCookieKey = "ZSC"
 // SessionMiddleware represents a middleware to check for a valid session and otherwise
 // create a new one.
 type SessionMiddleware struct {
-	service *authentication.Service
+	service *authn.Service
 }
 
 // NewSessionMiddleware returns a new instance of SessionMiddleware with the given
-// authentication.Service.
-func NewSessionMiddleware(service *authentication.Service) *SessionMiddleware {
+// authn.Service.
+func NewSessionMiddleware(service *authn.Service) *SessionMiddleware {
 	return &SessionMiddleware{service}
 }
 
@@ -55,26 +55,26 @@ func (m *SessionMiddleware) Wrap(handler http.Handler) http.HandlerFunc {
 }
 
 // ReferrerHeaderKey is the name of the header which stores the original URI before
-// being redirected to the authentication URI.
+// being redirected to the authn URI.
 const ReferrerHeaderKey = "Z-Referrer"
 
 // AuthnMiddleware represents a middleware to check for a valid authenticated session
 // and otherwise redirects to the authenURI.
 type AuthnMiddleware struct {
-	service  *authentication.Service
+	service  *authn.Service
 	authnURI string
 }
 
 // NewAuthnMiddleware returns a new instance of AuthnMiddleware with the given
-// authentication.Service and authnURI.
-func NewAuthnMiddleware(service *authentication.Service, authnURI string) *AuthnMiddleware {
+// authn.Service and authnURI.
+func NewAuthnMiddleware(service *authn.Service, authnURI string) *AuthnMiddleware {
 	return &AuthnMiddleware{
 		service:  service,
 		authnURI: authnURI,
 	}
 }
 
-// Wrap wraps a given http.Handler and validates the session for a valid authentication
+// Wrap wraps a given http.Handler and validates the session for a valid authn
 // before executing the passed in handler.
 func (m *AuthnMiddleware) Wrap(handler http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -89,7 +89,7 @@ func (m *AuthnMiddleware) Wrap(handler http.Handler) http.HandlerFunc {
 			return
 		}
 
-		if err = m.service.ValidateAuthentication(cookie.Value); err != nil {
+		if err = m.service.ValidateAuthn(cookie.Value); err != nil {
 			redirect(m.authnURI, w, r)
 			return
 		}

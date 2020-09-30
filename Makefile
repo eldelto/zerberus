@@ -19,4 +19,8 @@ run:
 
 test:
 	@echo Testing Zerberus
-	@go test ./...
+	@richgo test ./...
+
+test-loop:
+	@echo Waiting for file changes ...
+	@reflex -r '\.go$$' make test

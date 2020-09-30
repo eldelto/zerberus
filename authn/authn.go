@@ -1,4 +1,4 @@
-package authentication
+package authn
 
 import (
 	"fmt"
@@ -44,7 +44,8 @@ func (s *Session) IsValid() bool {
 	return expirationTime.After(time.Now())
 }
 
-type AuthenticationRequest struct {
+// Request holds all information for initiating a new authentication flow.
+type Request struct {
 	id          string
 	state       string
 	sessionID   string
@@ -54,18 +55,19 @@ type AuthenticationRequest struct {
 	lifetime    time.Duration
 }
 
-func NewAuthenticationRequest(sessionID string, redirectURL url.URL, provider string) (AuthenticationRequest, error) {
+// NewRequest returns a new Request containing the given parameters.
+func NewRequest(sessionID string, redirectURL url.URL, provider string) (Request, error) {
 	id, err := uuid.NewRandom()
 	if err != nil {
-		return AuthenticationRequest{}, NewUnknownError(err, "error while generating a new AuthenticationRequest ID")
+		return Request{}, NewUnknownError(err, "error while generating a new Request ID")
 	}
 
 	state, err := uuid.NewRandom()
 	if err != nil {
-		return AuthenticationRequest{}, NewUnknownError(err, "error while generating a new AuthenticationRequest state")
+		return Request{}, NewUnknownError(err, "error while generating a new Request state")
 	}
 
-	request := AuthenticationRequest{
+	request := Request{
 		id:          id.String(),
 		state:       state.String(),
 		sessionID:   sessionID,
@@ -82,15 +84,15 @@ func NewAuthenticationRequest(sessionID string, redirectURL url.URL, provider st
 type Repository interface {
 	StoreSession(session Session) error
 	FetchSession(sessionID string) (Session, error)
-	StoreAuthenticationRequest(request AuthenticationRequest) error
+	StoreRequest(request Request) error
 }
 
 /* DRAFT
 
 
-func (s *Service) HandleCallback(session Session, response AuthenticationResponse) (Session, error) {
-	// Checks state, type against stored AuthenticationRequest
-	if err := validateAuthenticationResponse(session, response); err != nil {
+func (s *Service) HandleCallback(session Session, response AuthnResponse) (Session, error) {
+	// Checks state, type against stored Request
+	if err := validateAuthnResponse(session, response); err != nil {
 		return Session{}, err
 	}
 
@@ -99,7 +101,7 @@ func (s *Service) HandleCallback(session Session, response AuthenticationRespons
 		return ValidationError
 	}
 
-	if err = provider.HandleCallback(reponse.AuthenticationCode); err != nil {
+	if err = provider.HandleCallback(reponse.AuthnCode); err != nil {
 		return Session{}, err
 	}
 
@@ -113,6 +115,8 @@ func RegisterLoginProvider(key string, provider LoginProvider) error
 }
 */
 
+// LoginProvider handles the custom logic used to provide authentication via a
+// third party service (e.g. Google, Facebook, etc.).
 type LoginProvider interface {
 	InitLogin(w http.ResponseWriter) error
 	HandleCallback(authorizationCode string) error
@@ -169,10 +173,10 @@ func (s *Service) ValidateSession(sessionID string) error {
 	return nil
 }
 
-// ValidateAuthentication validates the given sessionID and ensures that the session
+// ValidateAuthn validates the given sessionID and ensures that the session
 // has a valid authentication.
 // It returns nil if the session is valid otherwise the respective error is returned.
-func (s *Service) ValidateAuthentication(sessionID string) error {
+func (s *Service) ValidateAuthn(sessionID string) error {
 	session, err := s.repository.FetchSession(sessionID)
 	if err != nil {
 		return err
@@ -189,6 +193,9 @@ func (s *Service) ValidateAuthentication(sessionID string) error {
 	return nil
 }
 
+// RegisterLoginProvider registers the given LoginProvider under the given key.
+// If a LoginProvider for the given key is already registered a ConfigurationError
+// is returned otherwise nil.
 func (s *Service) RegisterLoginProvider(provider LoginProvider, key string) error {
 	_, ok := s.loginProviders[key]
 	if ok {
@@ -201,13 +208,14 @@ func (s *Service) RegisterLoginProvider(provider LoginProvider, key string) erro
 	return nil
 }
 
-func (s *Service) InitAuthentication(request AuthenticationRequest, w http.ResponseWriter) error {
+// InitAuthn initiates a new Authentication flow via a third party identity provider.
+func (s *Service) InitAuthn(request Request, w http.ResponseWriter) error {
 	session, err := s.repository.FetchSession(request.sessionID)
 	if err != nil {
 		return &InvalidSessionError{request.sessionID}
 	}
 
-	if s.ValidateAuthentication(session.id) == nil {
+	if s.ValidateAuthn(session.id) == nil {
 		w.Header().Add("Location", request.redirectURL.String())
 		return nil
 	}
@@ -218,7 +226,7 @@ func (s *Service) InitAuthentication(request AuthenticationRequest, w http.Respo
 		return &ConfigurationError{msg}
 	}
 
-	if err = s.repository.StoreAuthenticationRequest(request); err != nil {
+	if err = s.repository.StoreRequest(request); err != nil {
 		return err
 	}
 
@@ -265,6 +273,8 @@ func (e *CallbackError) Error() string {
 	return fmt.Sprintf("error while handling callback: %s", e.message)
 }
 
+// ConfigurationError indicates that an invalid configuration has been provided
+// or the current configuration is in an invalid state.
 type ConfigurationError struct {
 	message string
 }

@@ -11,8 +11,8 @@ import (
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"
 
-	"github.com/eldelto/zerberus/authentication"
-	authnPersistence "github.com/eldelto/zerberus/authentication/persistence"
+	"github.com/eldelto/zerberus/authn"
+	authnPersistence "github.com/eldelto/zerberus/authn/persistence"
 	"github.com/eldelto/zerberus/internal/webutils"
 	"github.com/eldelto/zerberus/oauth2"
 	oauth2Persistence "github.com/eldelto/zerberus/oauth2/persistence"
@@ -70,7 +70,7 @@ func configureAPI(api *operations.ZerberusAPI) http.Handler {
 	api.OAuth2AuthenticateHandler = o_auth2.AuthenticateHandlerFunc(func(params o_auth2.AuthenticateParams) middleware.Responder {
 		sessionCookie, err := params.HTTPRequest.Cookie("ZSC")
 		if err == nil {
-			if err = authnService.ValidateAuthentication(sessionCookie.Value); err == nil {
+			if err = authnService.ValidateAuthn(sessionCookie.Value); err == nil {
 				return newRedirect("/v1/logout")
 			}
 		}
@@ -165,7 +165,7 @@ var authRepository = oauth2Persistence.NewInMemoryRepository()
 var authService = oauth2.NewService(authRepository)
 
 var authnRepository = authnPersistence.NewInMemoryRepository()
-var authnService = authentication.NewService(authnRepository)
+var authnService = authn.NewService(authnRepository)
 
 var sessionMiddleware = webutils.NewSessionMiddleware(authnService)
 var authnMiddleware = webutils.NewAuthnMiddleware(authnService, "/v1/authenticate")

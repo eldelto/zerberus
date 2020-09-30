@@ -1,4 +1,4 @@
-package authentication
+package authn
 
 import (
 	"net/http"
@@ -60,7 +60,7 @@ func TestService_ValidateSession(t *testing.T) {
 	}
 }
 
-func TestService_ValidateAuthentication(t *testing.T) {
+func TestService_ValidateAuthn(t *testing.T) {
 	tests := []struct {
 		name      string
 		sessionID string
@@ -74,8 +74,8 @@ func TestService_ValidateAuthentication(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := service.ValidateAuthentication(tt.sessionID)
-			AssertTypeEquals(t, tt.wantErr, err, "service.ValidateAuthentication error")
+			err := service.ValidateAuthn(tt.sessionID)
+			AssertTypeEquals(t, tt.wantErr, err, "service.ValidateAuthn error")
 		})
 	}
 }
@@ -86,32 +86,34 @@ var redirectURL, _ = url.Parse(redirectString)
 
 const providerKey = "stubProvider"
 
-var authenticatedAuthnRequest, _ = NewAuthenticationRequest(validSessionID, *redirectURL, providerKey)
-var invalidSessionAuthnRequest, _ = NewAuthenticationRequest(nonExistentSessionID, *redirectURL, providerKey)
-var anonymousAuthnRequest, _ = NewAuthenticationRequest(validAnonymousSessionID, *redirectURL, providerKey)
-var badProviderAuthnRequest, _ = NewAuthenticationRequest(validAnonymousSessionID, *redirectURL, "badProvider")
+var authenticatedRequest, _ = NewRequest(validSessionID, *redirectURL, providerKey)
+var invalidSessionRequest, _ = NewRequest(nonExistentSessionID, *redirectURL, providerKey)
+var anonymousRequest, _ = NewRequest(validAnonymousSessionID, *redirectURL, providerKey)
+var badProviderRequest, _ = NewRequest(validAnonymousSessionID, *redirectURL, "badProvider")
+var nonExistentRequest, _ = NewRequest(nonExistentSessionID, *redirectURL, "badProvider")
 
-func TestService_InitAuthentication(t *testing.T) {
+func TestService_InitAuthn(t *testing.T) {
 	tests := []struct {
 		name         string
-		request      AuthenticationRequest
+		request      Request
 		wantLocation string
 		wantErr      error
 	}{
-		{"authenticatedAuthnRequest", authenticatedAuthnRequest, redirectString, nil},
-		{"invalidSessionAuthnRequest", invalidSessionAuthnRequest, "", &InvalidSessionError{}},
-		{"anonymousAuthnRequest", anonymousAuthnRequest, redirectString, nil},
-		{"badProviderAuthnRequest", badProviderAuthnRequest, "", &ConfigurationError{}},
+		{"authenticatedRequest", authenticatedRequest, redirectString, nil},
+		{"invalidSessionRequest", invalidSessionRequest, "", &InvalidSessionError{}},
+		{"anonymousRequest", anonymousRequest, redirectString, nil},
+		{"badProviderRequest", badProviderRequest, "", &ConfigurationError{}},
+		{"nonExistentRequest", nonExistentRequest, "", &InvalidSessionError{}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			w := NewStubResponseWriter()
 
-			err := service.InitAuthentication(tt.request, w)
-			AssertTypeEquals(t, tt.wantErr, err, "service.InitAuthentication error")
+			err := service.InitAuthn(tt.request, w)
+			AssertTypeEquals(t, tt.wantErr, err, "service.InitAuthn error")
 
 			location := w.Header().Get("Location")
-			AssertEquals(t, tt.wantLocation, location, "service.InitAuthentication location header")
+			AssertEquals(t, tt.wantLocation, location, "service.InitAuthn location header")
 		})
 	}
 }
@@ -135,7 +137,7 @@ func (r *stubRepository) FetchSession(sessionID string) (Session, error) {
 	}
 }
 
-func (r *stubRepository) StoreAuthenticationRequest(request AuthenticationRequest) error {
+func (r *stubRepository) StoreRequest(request Request) error {
 	return nil
 }
 
