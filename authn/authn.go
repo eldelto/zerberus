@@ -2,7 +2,6 @@ package authn
 
 import (
 	"fmt"
-	"net/http"
 	"net/url"
 	"time"
 
@@ -115,7 +114,7 @@ func (s *Service) HandleCallback(response Response) (Session, error) {
 // LoginProvider handles the custom logic used to provide authentication via a
 // third party service (e.g. Google, Facebook, etc.).
 type LoginProvider interface {
-	InitLogin(w http.ResponseWriter) error
+	InitLogin() (url.URL, error)
 	HandleCallback(authorizationCode string) error
 }
 
@@ -206,28 +205,27 @@ func (s *Service) RegisterLoginProvider(provider LoginProvider, key string) erro
 }
 
 // InitAuthn initiates a new Authentication flow via a third party identity provider.
-func (s *Service) InitAuthn(request Request, w http.ResponseWriter) error {
+func (s *Service) InitAuthn(request Request) (url.URL, error) {
 	session, err := s.repository.FetchSession(request.sessionID)
 	if err != nil {
-		return &InvalidSessionError{request.sessionID}
+		return url.URL{}, &InvalidSessionError{request.sessionID}
 	}
 
 	if s.ValidateAuthn(session.id) == nil {
-		w.Header().Add("Location", request.redirectURL.String())
-		return nil
+		return request.redirectURL, nil
 	}
 
 	provider, ok := s.loginProviders[request.provider]
 	if !ok {
 		msg := fmt.Sprintf("provider with key '%s' is not registered", request.provider)
-		return &ConfigurationError{msg}
+		return url.URL{}, &ConfigurationError{msg}
 	}
 
 	if err = s.repository.StoreRequest(request); err != nil {
-		return err
+		return url.URL{}, err
 	}
 
-	return provider.InitLogin(w)
+	return provider.InitLogin()
 }
 
 // InvalidSessionError indicates that the given session does not exist, has expired

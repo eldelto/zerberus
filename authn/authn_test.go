@@ -1,7 +1,6 @@
 package authn
 
 import (
-	"net/http"
 	"net/url"
 	"testing"
 	"time"
@@ -107,13 +106,9 @@ func TestService_InitAuthn(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			w := NewStubResponseWriter()
-
-			err := service.InitAuthn(tt.request, w)
+			url, err := service.InitAuthn(tt.request)
+			AssertEquals(t, tt.wantLocation, url.String(), "service.InitAuthn url")
 			AssertTypeEquals(t, tt.wantErr, err, "service.InitAuthn error")
-
-			location := w.Header().Get("Location")
-			AssertEquals(t, tt.wantLocation, location, "service.InitAuthn location header")
 		})
 	}
 }
@@ -141,32 +136,14 @@ func (r *stubRepository) StoreRequest(request Request) error {
 	return nil
 }
 
-type stubResponseWriter struct {
-	header http.Header
+type stubLoginProvider struct{}
+
+func (lp *stubLoginProvider) InitLogin() (url.URL, error) {
+	url, err := url.Parse(redirectString)
+
+	return *url, err
 }
 
-func NewStubResponseWriter() http.ResponseWriter {
-	return &stubResponseWriter{http.Header{}}
+func (lp *stubLoginProvider) HandleCallback(authorizationCode string) error {
+	return nil
 }
-
-func (w *stubResponseWriter) Header() http.Header {
-	return w.header
-}
-func (w *stubResponseWriter) Write([]byte) (int, error) {
-	return 0, nil
-}
-
-func (w *stubResponseWriter) WriteHeader(statusCode int) {
-	return
-}
-
-type stubLoginProvider struct {}
-
-	func (lp *stubLoginProvider) InitLogin(w http.ResponseWriter) error {
-		w.Header().Add("Location", redirectString)
-		return nil
-	}
-
-	func (lp *stubLoginProvider) HandleCallback(authorizationCode string) error {
-		return nil
-	}
