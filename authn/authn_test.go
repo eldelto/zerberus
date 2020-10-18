@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/eldelto/zerberus/internal/testutils"
+	"github.com/eldelto/zerberus/internal/testutils"
 )
 
 const validSessionID = "111"
@@ -54,7 +54,7 @@ func TestService_ValidateSession(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := service.ValidateSession(tt.sessionID)
-			AssertTypeEquals(t, tt.wantErr, err, "service.ValidateSession error")
+			testutils.AssertTypeEquals(t, tt.wantErr, err, "service.ValidateSession error")
 		})
 	}
 }
@@ -74,7 +74,7 @@ func TestService_ValidateAuthn(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := service.ValidateAuthn(tt.sessionID)
-			AssertTypeEquals(t, tt.wantErr, err, "service.ValidateAuthn error")
+			testutils.AssertTypeEquals(t, tt.wantErr, err, "service.ValidateAuthn error")
 		})
 	}
 }
@@ -107,8 +107,28 @@ func TestService_InitAuthn(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			url, err := service.InitAuthn(tt.request)
-			AssertEquals(t, tt.wantLocation, url.String(), "service.InitAuthn url")
-			AssertTypeEquals(t, tt.wantErr, err, "service.InitAuthn error")
+			testutils.AssertEquals(t, tt.wantLocation, url.String(), "service.InitAuthn url")
+			testutils.AssertTypeEquals(t, tt.wantErr, err, "service.InitAuthn error")
+		})
+	}
+}
+
+func TestService_HandleCallback(t *testing.T) {
+	tests := []struct {
+		name           string
+		response       Response
+		wantNewSession bool
+		wantErr        error
+	}{}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			session, err := service.HandleCallback(tt.response)
+			testutils.AssertTypeEquals(t, tt.wantErr, err, "service.HandleCallback error")
+			if tt.wantNewSession {
+				testutils.AssertNotEquals(t, tt.response.SessionID, session.ID(), "service.HandleCallback session ID")
+			} else {
+				testutils.AssertEquals(t, tt.response.SessionID, session.ID(), "service.HandleCallback session ID")
+			}
 		})
 	}
 }

@@ -19,16 +19,19 @@ func NewFakeLoginProvider() *FakeLoginProvider {
 // InitLogin immediately returns the callback URL with a hardcoded authorization code.
 func (lp *FakeLoginProvider) InitLogin() (url.URL, error) {
 	authorizationCode := uuid.Nil
-	url, err := url.Parse("/v1/callback#" + authorizationCode.String())
+	uri, err := url.Parse("/v1/callback#" + authorizationCode.String())
+	if err != nil {
+		return url.URL{}, authn.NewLoginProviderError(lp, "couldn't parse URL")
+	}
 
-	return *url, err
+	return *uri, nil
 }
 
 // HandleCallback only checks if the hardcoded authorization code is present
 // and confirms the authentication. Otherwise it returns a CallbackError.
 func (lp *FakeLoginProvider) HandleCallback(authorizationCode string) error {
 	if authorizationCode != uuid.Nil.String() {
-		return authn.NewCallbackError(lp, "invalid authorization code: "+authorizationCode)
+		return authn.NewLoginProviderError(lp, "invalid authorization code: "+authorizationCode)
 	}
 
 	return nil
