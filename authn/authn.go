@@ -236,41 +236,46 @@ func (s *Service) InitAuthn(request Request) (url.URL, error) {
 	return provider.InitLogin()
 }
 
-func (s *Service) HandleCallback(response Response) (*Session, error) {
+func (s *Service) HandleCallback(response Response) (*Session, string, error) {
 	// Checks session, id, state & type against stored Request
-	provider, err := s.validateAuthnResponse(response)
+	provider, request, err := s.validateAuthnResponse(response)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	if err = provider.HandleCallback(response.AuthorizationCode); err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
-	return s.createAuthenticatedSession()
+	session, err := s.createAuthenticatedSession()
+	if err != nil {
+		return nil, "", err
+	}
+
+	return session, request.redirectURL.String(), nil
 }
 
-func (s *Service) validateAuthnResponse(response Response) (LoginProvider, error) {
+func (s *Service) validateAuthnResponse(response Response) (LoginProvider, Request, error) {
 	request, err := s.repository.FetchRequest(response.ID)
 	if err != nil {
-		return nil, err
+		return nil, Request{}, err
 	}
 
 	if request.sessionID != response.SessionID {
-		return nil, NewCallbackError("request sessionID did not match response sessionID")
+		return nil, Request{}, NewCallbackError("request sessionID did not match response sessionID")
 	}
 
 	if request.state != response.State {
-		return nil, NewCallbackError("request state did not match response state")
+		return nil, Request{}, NewCallbackError("request state did not match response state")
 	}
 
 	provider, ok := s.loginProviders[request.provider]
 	if !ok {
 		msg := fmt.Sprintf("could not find provider for key '%s'", request.provider)
-		return nil, NewCallbackError(msg)
+		return nil, Request{}, NewCallbackError(msg)
 	}
 
-	return provider, nil
+	return provider, request, nil
 }
 
 func (s *Service) createAuthenticatedSession() (*Session, error) {
