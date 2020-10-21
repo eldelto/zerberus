@@ -65,10 +65,10 @@ func TestService_ValidateAuthn(t *testing.T) {
 		sessionID string
 		wantErr   error
 	}{
-		{"valid sessionID", validSessionID, nil},
-		{"valid anonymous sessionID", validAnonymousSessionID, &NotAuthenticatedError{}},
-		{"invalid sessionID", invalidSessionID, &InvalidSessionError{}},
-		{"non-existent sessionID", nonExistentSessionID, &InvalidSessionError{}},
+		{"valid session ID", validSessionID, nil},
+		{"valid anonymous session ID", validAnonymousSessionID, &NotAuthenticatedError{}},
+		{"invalid session ID", invalidSessionID, &InvalidSessionError{}},
+		{"non-existent session ID", nonExistentSessionID, &InvalidSessionError{}},
 	}
 
 	for _, tt := range tests {
@@ -99,11 +99,11 @@ func TestService_InitAuthn(t *testing.T) {
 		wantRedirectURL string
 		wantErr         error
 	}{
-		{"authenticatedRequest", authenticatedRequest, callbackRedirectString, nil},
-		{"invalidSessionRequest", invalidSessionRequest, "", &InvalidSessionError{}},
-		{"anonymousRequest", anonymousRequest, loginProviderRedirectString, nil},
-		{"badProviderRequest", badProviderRequest, "", &ConfigurationError{}},
-		{"nonExistentRequest", nonExistentRequest, "", &InvalidSessionError{}},
+		{"authenticated session", authenticatedRequest, callbackRedirectString, nil},
+		{"invalid session", invalidSessionRequest, "", &InvalidSessionError{}},
+		{"anonymous session", anonymousRequest, loginProviderRedirectString, nil},
+		{"bad provider", badProviderRequest, "", &ConfigurationError{}},
+		{"non-existent session ID", nonExistentRequest, "", &InvalidSessionError{}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -122,7 +122,15 @@ func TestService_HandleCallback(t *testing.T) {
 		wantRedirectURL string
 		wantErr         error
 	}{
-		{"authenticatedResponse", authenticatedResponse, false, successRedirectURL, nil},
+		{"authenticated session", authenticatedResponse, false, successRedirectString, nil},
+		{"invalid session", invalidSessionResponse, false, "", &InvalidSessionError{}},
+		{"anonymous session", anonymousResponse, true, successRedirectString, nil},
+		{"bad provider", badProviderResponse, false, "", &CallbackError{}},
+		{"non-existent session ID", nonExistentResponse, false, "", &InvalidSessionError{}},
+		{"mismated state", badStateResponse, false, "", &CallbackError{}},
+		{"mismated session ID", badSessionIDResponse, false, "", &CallbackError{}},
+		{"expired request", expiredResponse, false, "", &CallbackError{}},
+
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
