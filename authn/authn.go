@@ -236,6 +236,7 @@ func (s *Service) InitAuthn(request Request) (url.URL, error) {
 	return provider.InitLogin()
 }
 
+// TODO: Move SessionID out of Request and Response?
 func (s *Service) HandleCallback(response Response) (*Session, string, error) {
 	// Checks session, id, state & type against stored Request
 	provider, request, err := s.validateAuthnResponse(response)
@@ -243,16 +244,29 @@ func (s *Service) HandleCallback(response Response) (*Session, string, error) {
 		return nil, "", err
 	}
 
-	if err = provider.HandleCallback(response.AuthorizationCode); err != nil {
-		return nil, "", err
-	}
-
-	session, err := s.createAuthenticatedSession()
+	session, err := s.repository.FetchSession(response.SessionID)
 	if err != nil {
 		return nil, "", err
 	}
 
-	return session, request.redirectURL.String(), nil
+	if !session.IsValid() {
+		return nil, "", &InvalidSessionError{}
+	}
+
+	if session.isAuthenticated {
+		return &session, request.redirectURL.String(), nil
+	}
+
+	if err = provider.HandleCallback(response.AuthorizationCode); err != nil {
+		return nil, "", err
+	}
+
+	authenticatedSession, err := s.createAuthenticatedSession()
+	if err != nil {
+		return nil, "", err
+	}
+
+	return authenticatedSession, request.redirectURL.String(), nil
 }
 
 func (s *Service) validateAuthnResponse(response Response) (LoginProvider, Request, error) {
@@ -267,6 +281,11 @@ func (s *Service) validateAuthnResponse(response Response) (LoginProvider, Reque
 
 	if request.state != response.State {
 		return nil, Request{}, NewCallbackError("request state did not match response state")
+	}
+
+	expirationTime := request.createdAt.Add(request.lifetime)
+	if !expirationTime.After(time.Now()) {
+		return nil, Request{}, NewCallbackError("request has expired")
 	}
 
 	provider, ok := s.loginProviders[request.provider]
