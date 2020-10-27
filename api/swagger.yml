@@ -107,31 +107,6 @@ paths:
       summary: "Authentication entry point"
       description: "Presents the user a selection of authentication providers."
       operationId: "authenticate"
-      parameters:
-      - in: "query"
-        name: "response_type"
-        type: "string"
-        description: "The expected response type (currently only code is supported)."
-        required: true
-      - in: "query"
-        name: "client_id"
-        type: "string"
-        description: "The unique identifier of the client that has been registered with the auth server."
-        required: true
-      - in: "query"
-        name: "redirect_uri"
-        type: "string"
-        description: "The URI the client will be redirected to after a successful authorization (has to bee the same URI that has been registered with the auth server)."
-        required: true
-      - in: "query"
-        name: "scope"
-        type: "string"
-        description: "Comma-separated list of scopes the client wants to request."
-      - in: "query"
-        name: "state"
-        type: "string"
-        description: "Opage value that will be returned unmodified after the redirect."
-        required: true
       produces:
       - "text/html"
       responses:
@@ -139,6 +114,28 @@ paths:
           description: "The authentication page."
         "302":
           description: "Redirect to the given redirect_uri if the parameter validation failed."
+    post:
+      tags:
+      - "OAuth2"
+      summary: "Initialize an authentication"
+      description: "Authenticates the user via the selected authentication provider."
+      operationId: "create_authentication"
+      parameters:
+      - in: "query"
+        name: "redirect_uri"
+        type: "string"
+        description: "The URI the client will be redirected to after a successful authorization (has to bee the same URI that has been registered with the auth server)."
+        required: true
+      - in: "query"
+        name: "provider"
+        type: "string"
+        description: "Unique identifier of the selected authentication provider."
+        required: true
+      produces:
+      - "text/html"
+      responses:
+        "302":
+          description: "Redirect to the selected authentication provider's authorization page."
 
   /token:
     post:

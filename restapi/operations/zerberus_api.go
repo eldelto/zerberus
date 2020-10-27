@@ -54,6 +54,9 @@ func NewZerberusAPI(spec *loads.Document) *ZerberusAPI {
 		OAuth2AuthorizeHandler: o_auth2.AuthorizeHandlerFunc(func(params o_auth2.AuthorizeParams) middleware.Responder {
 			return middleware.NotImplemented("operation o_auth2.Authorize has not yet been implemented")
 		}),
+		OAuth2CreateAuthenticationHandler: o_auth2.CreateAuthenticationHandlerFunc(func(params o_auth2.CreateAuthenticationParams) middleware.Responder {
+			return middleware.NotImplemented("operation o_auth2.CreateAuthentication has not yet been implemented")
+		}),
 		OAuth2CreateAuthorizationHandler: o_auth2.CreateAuthorizationHandlerFunc(func(params o_auth2.CreateAuthorizationParams) middleware.Responder {
 			return middleware.NotImplemented("operation o_auth2.CreateAuthorization has not yet been implemented")
 		}),
@@ -101,6 +104,8 @@ type ZerberusAPI struct {
 	OAuth2AuthenticateHandler o_auth2.AuthenticateHandler
 	// OAuth2AuthorizeHandler sets the operation handler for the authorize operation
 	OAuth2AuthorizeHandler o_auth2.AuthorizeHandler
+	// OAuth2CreateAuthenticationHandler sets the operation handler for the create authentication operation
+	OAuth2CreateAuthenticationHandler o_auth2.CreateAuthenticationHandler
 	// OAuth2CreateAuthorizationHandler sets the operation handler for the create authorization operation
 	OAuth2CreateAuthorizationHandler o_auth2.CreateAuthorizationHandler
 	// OAuth2CreateTokenHandler sets the operation handler for the create token operation
@@ -189,6 +194,9 @@ func (o *ZerberusAPI) Validate() error {
 	}
 	if o.OAuth2AuthorizeHandler == nil {
 		unregistered = append(unregistered, "o_auth2.AuthorizeHandler")
+	}
+	if o.OAuth2CreateAuthenticationHandler == nil {
+		unregistered = append(unregistered, "o_auth2.CreateAuthenticationHandler")
 	}
 	if o.OAuth2CreateAuthorizationHandler == nil {
 		unregistered = append(unregistered, "o_auth2.CreateAuthorizationHandler")
@@ -294,6 +302,10 @@ func (o *ZerberusAPI) initHandlerCache() {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
 	o.handlers["GET"]["/authorize"] = o_auth2.NewAuthorize(o.context, o.OAuth2AuthorizeHandler)
+	if o.handlers["POST"] == nil {
+		o.handlers["POST"] = make(map[string]http.Handler)
+	}
+	o.handlers["POST"]["/authenticate"] = o_auth2.NewCreateAuthentication(o.context, o.OAuth2CreateAuthenticationHandler)
 	if o.handlers["POST"] == nil {
 		o.handlers["POST"] = make(map[string]http.Handler)
 	}

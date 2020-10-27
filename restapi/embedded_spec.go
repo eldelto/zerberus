@@ -49,21 +49,26 @@ func init() {
         ],
         "summary": "Authentication entry point",
         "operationId": "authenticate",
+        "responses": {
+          "200": {
+            "description": "The authentication page."
+          },
+          "302": {
+            "description": "Redirect to the given redirect_uri if the parameter validation failed."
+          }
+        }
+      },
+      "post": {
+        "description": "Authenticates the user via the selected authentication provider.",
+        "produces": [
+          "text/html"
+        ],
+        "tags": [
+          "OAuth2"
+        ],
+        "summary": "Initialize an authentication",
+        "operationId": "create_authentication",
         "parameters": [
-          {
-            "type": "string",
-            "description": "The expected response type (currently only code is supported).",
-            "name": "response_type",
-            "in": "query",
-            "required": true
-          },
-          {
-            "type": "string",
-            "description": "The unique identifier of the client that has been registered with the auth server.",
-            "name": "client_id",
-            "in": "query",
-            "required": true
-          },
           {
             "type": "string",
             "description": "The URI the client will be redirected to after a successful authorization (has to bee the same URI that has been registered with the auth server).",
@@ -73,24 +78,15 @@ func init() {
           },
           {
             "type": "string",
-            "description": "Comma-separated list of scopes the client wants to request.",
-            "name": "scope",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "Opage value that will be returned unmodified after the redirect.",
-            "name": "state",
+            "description": "Unique identifier of the selected authentication provider.",
+            "name": "provider",
             "in": "query",
             "required": true
           }
         ],
         "responses": {
-          "200": {
-            "description": "The authentication page."
-          },
           "302": {
-            "description": "Redirect to the given redirect_uri if the parameter validation failed."
+            "description": "Redirect to the selected authentication provider's authorization page."
           }
         }
       }
@@ -331,21 +327,26 @@ func init() {
         ],
         "summary": "Authentication entry point",
         "operationId": "authenticate",
+        "responses": {
+          "200": {
+            "description": "The authentication page."
+          },
+          "302": {
+            "description": "Redirect to the given redirect_uri if the parameter validation failed."
+          }
+        }
+      },
+      "post": {
+        "description": "Authenticates the user via the selected authentication provider.",
+        "produces": [
+          "text/html"
+        ],
+        "tags": [
+          "OAuth2"
+        ],
+        "summary": "Initialize an authentication",
+        "operationId": "create_authentication",
         "parameters": [
-          {
-            "type": "string",
-            "description": "The expected response type (currently only code is supported).",
-            "name": "response_type",
-            "in": "query",
-            "required": true
-          },
-          {
-            "type": "string",
-            "description": "The unique identifier of the client that has been registered with the auth server.",
-            "name": "client_id",
-            "in": "query",
-            "required": true
-          },
           {
             "type": "string",
             "description": "The URI the client will be redirected to after a successful authorization (has to bee the same URI that has been registered with the auth server).",
@@ -355,24 +356,15 @@ func init() {
           },
           {
             "type": "string",
-            "description": "Comma-separated list of scopes the client wants to request.",
-            "name": "scope",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "description": "Opage value that will be returned unmodified after the redirect.",
-            "name": "state",
+            "description": "Unique identifier of the selected authentication provider.",
+            "name": "provider",
             "in": "query",
             "required": true
           }
         ],
         "responses": {
-          "200": {
-            "description": "The authentication page."
-          },
           "302": {
-            "description": "Redirect to the given redirect_uri if the parameter validation failed."
+            "description": "Redirect to the selected authentication provider's authorization page."
           }
         }
       }
