@@ -79,6 +79,7 @@ func NewRequest(sessionID string, redirectURL url.URL, provider string) (Request
 	return request, nil
 }
 
+// Response holds the information of the third party authentication callback.
 type Response struct {
 	ID                string
 	State             string
@@ -93,31 +94,6 @@ type Repository interface {
 	StoreRequest(request Request) error
 	FetchRequest(requestID string) (Request, error)
 }
-
-/* DRAFT
-type Response struct {
-	ID string
-	SessionID string
-	State string
-	AuthorizationCode string
-}
-
-// TODO: How to handle the redirect and setting of the session cookie?
-
-func (s *Service) HandleCallback(response Response) (Session, error) {
-	// Checks session, id, state & type against stored Request
-	provider, err := s.validateAuthnResponse(response)
-	if err != nil {
-		return Session{}, err
-	}
-
-	if err = provider.HandleCallback(reponse.AuthnCode); err != nil {
-		return Session{}, err
-	}
-
-	return s.createAuthenticatedSession
-}
-*/
 
 // LoginProvider handles the custom logic used to provide authentication via a
 // third party service (e.g. Google, Facebook, etc.).
@@ -236,7 +212,8 @@ func (s *Service) InitAuthn(request Request) (url.URL, error) {
 	return provider.InitLogin()
 }
 
-// TODO: Move SessionID out of Request and Response?
+// HandleCallback processes the authentication callback of a third party provider
+// with the previously set LoginProvider.
 func (s *Service) HandleCallback(response Response) (*Session, string, error) {
 	// Checks session, id, state & type against stored Request
 	provider, request, err := s.validateAuthnResponse(response)
@@ -326,6 +303,8 @@ type InvalidSessionError struct {
 func (e *InvalidSessionError) Error() string {
 	return fmt.Sprintf("session '%s' is not valid", e.SessionID)
 }
+
+// TODO: Rework error types
 
 // NotAuthenticatedError indicates that the given session is not authenticated
 // but anonymous.
