@@ -79,37 +79,21 @@ func NewRequest(sessionID string, redirectURL url.URL, provider string) (Request
 	return request, nil
 }
 
+// Response holds the information of the third party authentication callback.
+type Response struct {
+	ID                string
+	State             string
+	SessionID         string
+	AuthorizationCode string
+}
+
 // Repository handles session persistance.
 type Repository interface {
 	StoreSession(session Session) error
 	FetchSession(sessionID string) (Session, error)
 	StoreRequest(request Request) error
+	FetchRequest(requestID string) (Request, error)
 }
-
-/* DRAFT
-type Response struct {
-	ID string
-	SessionID string
-	State string
-	AuthorizationCode string
-}
-
-// TODO: How to handle the redirect and setting of the session cookie?
-
-func (s *Service) HandleCallback(response Response) (Session, error) {
-	// Checks session, id, state & type against stored Request
-	provider, err := s.validateAuthnResponse(response)
-	if err != nil {
-		return Session{}, err
-	}
-
-	if err = provider.HandleCallback(reponse.AuthnCode); err != nil {
-		return Session{}, err
-	}
-
-	return s.createAuthenticatedSession
-}
-*/
 
 // LoginProvider handles the custom logic used to provide authentication via a
 // third party service (e.g. Google, Facebook, etc.).
@@ -228,6 +212,88 @@ func (s *Service) InitAuthn(request Request) (url.URL, error) {
 	return provider.InitLogin()
 }
 
+// HandleCallback processes the authentication callback of a third party provider
+// with the previously set LoginProvider.
+func (s *Service) HandleCallback(response Response) (*Session, string, error) {
+	// Checks session, id, state & type against stored Request
+	provider, request, err := s.validateAuthnResponse(response)
+	if err != nil {
+		return nil, "", err
+	}
+
+	session, err := s.repository.FetchSession(response.SessionID)
+	if err != nil {
+		return nil, "", err
+	}
+
+	if !session.IsValid() {
+		return nil, "", &InvalidSessionError{}
+	}
+
+	if session.isAuthenticated {
+		return &session, request.redirectURL.String(), nil
+	}
+
+	if err = provider.HandleCallback(response.AuthorizationCode); err != nil {
+		return nil, "", err
+	}
+
+	authenticatedSession, err := s.createAuthenticatedSession()
+	if err != nil {
+		return nil, "", err
+	}
+
+	return authenticatedSession, request.redirectURL.String(), nil
+}
+
+func (s *Service) validateAuthnResponse(response Response) (LoginProvider, Request, error) {
+	request, err := s.repository.FetchRequest(response.ID)
+	if err != nil {
+		return nil, Request{}, err
+	}
+
+	if request.sessionID != response.SessionID {
+		return nil, Request{}, NewCallbackError("request sessionID did not match response sessionID")
+	}
+
+	if request.state != response.State {
+		return nil, Request{}, NewCallbackError("request state did not match response state")
+	}
+
+	expirationTime := request.createdAt.Add(request.lifetime)
+	if !expirationTime.After(time.Now()) {
+		return nil, Request{}, NewCallbackError("request has expired")
+	}
+
+	provider, ok := s.loginProviders[request.provider]
+	if !ok {
+		msg := fmt.Sprintf("could not find provider for key '%s'", request.provider)
+		return nil, Request{}, NewCallbackError(msg)
+	}
+
+	return provider, request, nil
+}
+
+func (s *Service) createAuthenticatedSession() (*Session, error) {
+	uuid, err := uuid.NewRandom()
+	if err != nil {
+		return nil, NewUnknownError(err, "error while generating a new session ID")
+	}
+
+	session := Session{
+		id:              uuid.String(),
+		createdAt:       time.Now(),
+		lifetime:        time.Hour * 24,
+		isAuthenticated: true,
+	}
+
+	if err = s.repository.StoreSession(session); err != nil {
+		return nil, err
+	}
+
+	return &session, nil
+}
+
 // InvalidSessionError indicates that the given session does not exist, has expired
 // or is invalid in any other way.
 type InvalidSessionError struct {
@@ -237,6 +303,8 @@ type InvalidSessionError struct {
 func (e *InvalidSessionError) Error() string {
 	return fmt.Sprintf("session '%s' is not valid", e.SessionID)
 }
+
+// TODO: Rework error types
 
 // NotAuthenticatedError indicates that the given session is not authenticated
 // but anonymous.
@@ -248,24 +316,40 @@ func (e *NotAuthenticatedError) Error() string {
 	return fmt.Sprintf("session '%s' is not authenticated", e.SessionID)
 }
 
-// CallbackError indicates that the given LoginProvider encountered a problem while
-// processing the callback request.
+// CallbackError indicates an error during the authentication callback.
 type CallbackError struct {
-	Provider LoginProvider
-	message  string
+	message string
 }
 
-// NewCallbackError returns a new CallbackError for the given LoginProvider with the
-// specified message.
-func NewCallbackError(provider LoginProvider, message string) error {
+// NewCallbackError returns a new CallbackError with the specified message.
+func NewCallbackError(message string) error {
 	return &CallbackError{
-		Provider: provider,
-		message:  message,
+		message: message,
 	}
 }
 
 func (e *CallbackError) Error() string {
 	return fmt.Sprintf("error while handling callback: %s", e.message)
+}
+
+// LoginProviderError indicates that the given LoginProvider encountered a problem while
+// processing the request.
+type LoginProviderError struct {
+	Provider LoginProvider
+	message  string
+}
+
+// NewLoginProviderError returns a new CallbackError for the given LoginProvider with the
+// specified message.
+func NewLoginProviderError(provider LoginProvider, message string) error {
+	return &LoginProviderError{
+		Provider: provider,
+		message:  message,
+	}
+}
+
+func (e *LoginProviderError) Error() string {
+	return fmt.Sprintf("error while handling request in LoginProvider '%T': %s", e.Provider, e.message)
 }
 
 // ConfigurationError indicates that an invalid configuration has been provided

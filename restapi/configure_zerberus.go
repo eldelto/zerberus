@@ -67,6 +67,13 @@ func configureAPI(api *operations.ZerberusAPI) http.Handler {
 		return webutils.NewTemplateProvider("assets/templates/authorize.html", request)
 	})
 
+	api.OAuth2CreateAuthorizationHandler = o_auth2.CreateAuthorizationHandlerFunc(func(params o_auth2.CreateAuthorizationParams) middleware.Responder {
+		// TODO: Generate the authorization code here
+		// TODO: Disable trailing slash rewrite in Caddy
+
+		return newRedirect(params.RedirectURI + "?code=123-123-123-123-123")
+	})
+
 	api.OAuth2AuthenticateHandler = o_auth2.AuthenticateHandlerFunc(func(params o_auth2.AuthenticateParams) middleware.Responder {
 		sessionCookie, err := params.HTTPRequest.Cookie("ZSC")
 		if err == nil {
@@ -75,22 +82,15 @@ func configureAPI(api *operations.ZerberusAPI) http.Handler {
 			}
 		}
 
-		/*request := oauth2.AuthorizationRequest{
-			ClientID:     params.ClientID,
-			RedirectURI:  params.RedirectURI,
-			ResponseType: params.ResponseType,
-			Scopes:       extractScopes(*params.Scope),
-			State:        params.State,
-		}*/
+		// TODO: Pass URL from referrer header to template so it post it to the provider.
 
 		return webutils.NewTemplateProvider("assets/templates/authenticate.html", nil)
 	})
 
-	api.OAuth2CreateAuthorizationHandler = o_auth2.CreateAuthorizationHandlerFunc(func(params o_auth2.CreateAuthorizationParams) middleware.Responder {
-		// TODO: Generate the authorization code here
-		// TODO: Disable trailing slash rewrite in Caddy
+	api.OAuth2CreateAuthenticationHandler = o_auth2.CreateAuthenticationHandlerFunc(func(params o_auth2.CreateAuthenticationParams) middleware.Responder {
+		// TODO: Create a new authn.Request and redirect to the authentication provider URL
 
-		return newRedirect(params.RedirectURI + "?code=123-123-123-123-123")
+		return middleware.NotImplemented("operation o_auth2.CreateAuthentication has not yet been implemented")
 	})
 
 	if api.OAuth2CreateTokenHandler == nil {

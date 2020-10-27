@@ -11,15 +11,20 @@ import (
 	golangswaggerpaths "path"
 )
 
-// AuthenticateURL generates an URL for the authenticate operation
-type AuthenticateURL struct {
+// CreateAuthenticationURL generates an URL for the create authentication operation
+type CreateAuthenticationURL struct {
+	Provider    string
+	RedirectURI string
+
 	_basePath string
+	// avoid unkeyed usage
+	_ struct{}
 }
 
 // WithBasePath sets the base path for this url builder, only required when it's different from the
 // base path specified in the swagger spec.
 // When the value of the base path is an empty string
-func (o *AuthenticateURL) WithBasePath(bp string) *AuthenticateURL {
+func (o *CreateAuthenticationURL) WithBasePath(bp string) *CreateAuthenticationURL {
 	o.SetBasePath(bp)
 	return o
 }
@@ -27,12 +32,12 @@ func (o *AuthenticateURL) WithBasePath(bp string) *AuthenticateURL {
 // SetBasePath sets the base path for this url builder, only required when it's different from the
 // base path specified in the swagger spec.
 // When the value of the base path is an empty string
-func (o *AuthenticateURL) SetBasePath(bp string) {
+func (o *CreateAuthenticationURL) SetBasePath(bp string) {
 	o._basePath = bp
 }
 
 // Build a url path and query string
-func (o *AuthenticateURL) Build() (*url.URL, error) {
+func (o *CreateAuthenticationURL) Build() (*url.URL, error) {
 	var _result url.URL
 
 	var _path = "/authenticate"
@@ -43,11 +48,25 @@ func (o *AuthenticateURL) Build() (*url.URL, error) {
 	}
 	_result.Path = golangswaggerpaths.Join(_basePath, _path)
 
+	qs := make(url.Values)
+
+	providerQ := o.Provider
+	if providerQ != "" {
+		qs.Set("provider", providerQ)
+	}
+
+	redirectURIQ := o.RedirectURI
+	if redirectURIQ != "" {
+		qs.Set("redirect_uri", redirectURIQ)
+	}
+
+	_result.RawQuery = qs.Encode()
+
 	return &_result, nil
 }
 
 // Must is a helper function to panic when the url builder returns an error
-func (o *AuthenticateURL) Must(u *url.URL, err error) *url.URL {
+func (o *CreateAuthenticationURL) Must(u *url.URL, err error) *url.URL {
 	if err != nil {
 		panic(err)
 	}
@@ -58,17 +77,17 @@ func (o *AuthenticateURL) Must(u *url.URL, err error) *url.URL {
 }
 
 // String returns the string representation of the path with query string
-func (o *AuthenticateURL) String() string {
+func (o *CreateAuthenticationURL) String() string {
 	return o.Must(o.Build()).String()
 }
 
 // BuildFull builds a full url with scheme, host, path and query string
-func (o *AuthenticateURL) BuildFull(scheme, host string) (*url.URL, error) {
+func (o *CreateAuthenticationURL) BuildFull(scheme, host string) (*url.URL, error) {
 	if scheme == "" {
-		return nil, errors.New("scheme is required for a full url on AuthenticateURL")
+		return nil, errors.New("scheme is required for a full url on CreateAuthenticationURL")
 	}
 	if host == "" {
-		return nil, errors.New("host is required for a full url on AuthenticateURL")
+		return nil, errors.New("host is required for a full url on CreateAuthenticationURL")
 	}
 
 	base, err := o.Build()
@@ -82,6 +101,6 @@ func (o *AuthenticateURL) BuildFull(scheme, host string) (*url.URL, error) {
 }
 
 // StringFull returns the string representation of a complete url
-func (o *AuthenticateURL) StringFull(scheme, host string) string {
+func (o *CreateAuthenticationURL) StringFull(scheme, host string) string {
 	return o.Must(o.BuildFull(scheme, host)).String()
 }

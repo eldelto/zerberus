@@ -37,3 +37,8 @@ func (r *InMemoryRepository) StoreRequest(request authn.Request) error {
 	// TODO: Implement
 	return nil
 }
+
+func (r *InMemoryRepository) FetchRequest(requestID string) (authn.Request, error) {
+	// TODO: Implement
+	return authn.Request{}, nil
+}

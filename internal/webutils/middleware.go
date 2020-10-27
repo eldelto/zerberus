@@ -99,7 +99,7 @@ func (m *AuthnMiddleware) Wrap(handler http.Handler) http.HandlerFunc {
 }
 
 func redirect(location string, w http.ResponseWriter, r *http.Request) {
-	w.Header().Del("Content-Type") //Remove Content-Type on empty responses
+	w.Header().Del("Content-Type") // Remove Content-Type on empty responses
 	w.Header().Add("Location", location)
 	w.Header().Add(ReferrerHeaderKey, r.RequestURI)
 	w.WriteHeader(302)
