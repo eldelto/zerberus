@@ -2,7 +2,7 @@
 # To-Do
 
 - [ ] GET /authorize
-  - [x] Validate AuthorizationRequest
+  - [x] Validate Request
     - [x] Create service methods
   - [x] Check cookie `ZSC` and validate against DB
     - [x] Create service methods
@@ -14,7 +14,7 @@
 - [ ] POST /authorize
   - [ ] Check cookie `ZSC` and validate against DB
   - [ ] Redirect to GET /authenticate (if no / invalid cookie)
-  - [ ] Generate authorization code and persist AuthorizationResponse in DB
+  - [ ] Generate authorization code and persist Response in DB
   - [ ] Return errors in query (if an error occurs and `redirect_uri` is set)
   - [ ] Redirect to `redirect_uri` (on success)
 

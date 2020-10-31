@@ -1,4 +1,4 @@
-package oauth2
+package auth
 
 import (
 	"fmt"
@@ -6,8 +6,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// AuthorizationRequest represents a client's authorization request to the server.
-type AuthorizationRequest struct {
+// Request represents a client's authorization request to the server.
+type Request struct {
 	ClientID     string
 	RedirectURI  string
 	ResponseType string
@@ -15,8 +15,8 @@ type AuthorizationRequest struct {
 	State        string
 }
 
-// AuthorizationResponse represents the server's authorization response to the client.
-type AuthorizationResponse struct {
+// Response represents the server's authorization response to the client.
+type Response struct {
 	ClientID     string
 	RedirectURI  string
 	ResponseType string
@@ -37,7 +37,7 @@ type ClientConfiguration struct {
 type Repository interface {
 	StoreClientConfiguration(config ClientConfiguration) error
 	FetchClientConfiguration(clientID string) (ClientConfiguration, error)
-	StoreAuthorizationResponse(response AuthorizationResponse) error
+	StoreResponse(response Response) error
 }
 
 // Service is the entrypoint for all authorization related operations.
@@ -50,20 +50,20 @@ func NewService(repository Repository) *Service {
 	return &Service{repository}
 }
 
-// Authorize validates the given AuthorizationRequest, generates and authorization code
-// and returns the AuthorizationResponse.
-func (s *Service) Authorize(request AuthorizationRequest) (AuthorizationResponse, error) {
-	err := s.ValidateAuthorizationRequest(request)
+// Authorize validates the given Request, generates and authorization code
+// and returns the Response.
+func (s *Service) Authorize(request Request) (Response, error) {
+	err := s.ValidateRequest(request)
 	if err != nil {
-		return AuthorizationResponse{}, err
+		return Response{}, err
 	}
 
 	return generateAuthorizationCode(request, s.repository)
 }
 
-// ValidateAuthorizationRequest validates the given AuthorizationRequest and returns
+// ValidateRequest validates the given Request and returns
 // an error if it does not match the configured ClientConfiguration.
-func (s *Service) ValidateAuthorizationRequest(request AuthorizationRequest) error {
+func (s *Service) ValidateRequest(request Request) error {
 	config, err := s.repository.FetchClientConfiguration(request.ClientID)
 	if err != nil {
 		return err
@@ -76,13 +76,13 @@ func (s *Service) ValidateAuthorizationRequest(request AuthorizationRequest) err
 	return validateScopes(request, config)
 }
 
-func generateAuthorizationCode(request AuthorizationRequest, repository Repository) (AuthorizationResponse, error) {
+func generateAuthorizationCode(request Request, repository Repository) (Response, error) {
 	code, err := uuid.NewRandom()
 	if err != nil {
-		return AuthorizationResponse{}, NewUnknownError(request.ClientID, err)
+		return Response{}, NewUnknownError(request.ClientID, err)
 	}
 
-	response := AuthorizationResponse{
+	response := Response{
 		ClientID:     request.ClientID,
 		RedirectURI:  request.RedirectURI,
 		ResponseType: request.ResponseType,
@@ -91,12 +91,12 @@ func generateAuthorizationCode(request AuthorizationRequest, repository Reposito
 		Code:         code.String(),
 	}
 
-	err = repository.StoreAuthorizationResponse(response)
+	err = repository.StoreResponse(response)
 
 	return response, err
 }
 
-func validateScopes(request AuthorizationRequest, config ClientConfiguration) error {
+func validateScopes(request Request, config ClientConfiguration) error {
 	validScopes := config.Scopes
 	for _, scope := range request.Scopes {
 		valid := false

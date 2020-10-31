@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/eldelto/zerberus/authn"
+	"github.com/eldelto/zerberus/internal/authn"
 )
 
 // SessionCookieKey is the name of the session cookie used by Zerberus.

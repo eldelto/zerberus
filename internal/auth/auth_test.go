@@ -1,10 +1,10 @@
-package oauth2
+package auth
 
 import (
 	"fmt"
 	"testing"
 
-	. "github.com/eldelto/zerberus/internal/testutils"
+	"github.com/eldelto/zerberus/internal/testutils"
 )
 
 const scope0 = "scope0"
@@ -25,18 +25,18 @@ var errorUnkown = fmt.Errorf("error")
 var service = NewService(&StubRepository{})
 
 func TestService_Authorize(t *testing.T) {
-	validRequest := validAuthorizationRequest()
+	validRequest := newRequest()
 
-	requestWithUnkownClientID := validAuthorizationRequest()
+	requestWithUnkownClientID := newRequest()
 	requestWithUnkownClientID.ClientID = notFoundClientID
 
-	requestWithBadRedirectURI := validAuthorizationRequest()
+	requestWithBadRedirectURI := newRequest()
 	requestWithBadRedirectURI.RedirectURI = "http://wrong.url"
 
-	requestWithBadScope := validAuthorizationRequest()
+	requestWithBadScope := newRequest()
 	requestWithBadScope.Scopes = []string{scope0, "bad_scope"}
 
-	validResponse := AuthorizationResponse{
+	validResponse := Response{
 		ClientID:     clientID0,
 		RedirectURI:  redirectURI0,
 		ResponseType: "code",
@@ -46,31 +46,31 @@ func TestService_Authorize(t *testing.T) {
 	}
 
 	type test struct {
-		input   AuthorizationRequest
-		want    AuthorizationResponse
+		input   Request
+		want    Response
 		wantErr error
 	}
 
 	tests := []test{
 		{validRequest, validResponse, nil},
-		{requestWithUnkownClientID, AuthorizationResponse{}, &NotFoundError{}},
-		{requestWithBadRedirectURI, AuthorizationResponse{}, &ClientValidationError{}},
-		{requestWithBadScope, AuthorizationResponse{}, &ClientValidationError{}},
+		{requestWithUnkownClientID, Response{}, &NotFoundError{}},
+		{requestWithBadRedirectURI, Response{}, &ClientValidationError{}},
+		{requestWithBadScope, Response{}, &ClientValidationError{}},
 	}
 
 	for _, tt := range tests {
 		result, err := service.Authorize(tt.input)
-		AssertTypeEquals(t, tt.wantErr, err, "service.Authorize error")
+		testutils.AssertTypeEquals(t, tt.wantErr, err, "service.Authorize error")
 		if err == nil {
-			AssertNotEquals(t, "", result.Code, "result.Code")
+			testutils.AssertNotEquals(t, "", result.Code, "result.Code")
 			tt.want.Code = result.Code
-			AssertEquals(t, tt.want, result, "service.Authorize result")
+			testutils.AssertEquals(t, tt.want, result, "service.Authorize result")
 		}
 	}
 }
 
-func validAuthorizationRequest() AuthorizationRequest {
-	return AuthorizationRequest{
+func newRequest() Request {
+	return Request{
 		ClientID:     clientID0,
 		RedirectURI:  redirectURI0,
 		ResponseType: "code",
@@ -102,7 +102,7 @@ func (r *StubRepository) FetchClientConfiguration(clientID string) (ClientConfig
 	}
 }
 
-func (r *StubRepository) StoreAuthorizationResponse(response AuthorizationResponse) error {
+func (r *StubRepository) StoreResponse(response Response) error {
 	switch response.ClientID {
 	case errorClientID:
 		return NewUnknownError(response.ClientID, errorUnkown)

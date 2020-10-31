@@ -11,11 +11,11 @@ import (
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"
 
-	"github.com/eldelto/zerberus/authn"
-	authnPersistence "github.com/eldelto/zerberus/authn/persistence"
+	"github.com/eldelto/zerberus/internal/auth"
+	authPersistence "github.com/eldelto/zerberus/internal/auth/persistence"
+	"github.com/eldelto/zerberus/internal/authn"
+	authnPersistence "github.com/eldelto/zerberus/internal/authn/persistence"
 	"github.com/eldelto/zerberus/internal/webutils"
-	"github.com/eldelto/zerberus/oauth2"
-	oauth2Persistence "github.com/eldelto/zerberus/oauth2/persistence"
 	"github.com/eldelto/zerberus/restapi/operations"
 	"github.com/eldelto/zerberus/restapi/operations/o_auth2"
 )
@@ -49,7 +49,7 @@ func configureAPI(api *operations.ZerberusAPI) http.Handler {
 	api.JSONProducer = runtime.JSONProducer()
 
 	api.OAuth2AuthorizeHandler = o_auth2.AuthorizeHandlerFunc(func(params o_auth2.AuthorizeParams) middleware.Responder {
-		request := oauth2.AuthorizationRequest{
+		request := auth.Request{
 			ClientID:     params.ClientID,
 			RedirectURI:  params.RedirectURI,
 			ResponseType: params.ResponseType,
@@ -57,7 +57,7 @@ func configureAPI(api *operations.ZerberusAPI) http.Handler {
 			State:        params.State,
 		}
 
-		if err := authService.ValidateAuthorizationRequest(request); err != nil {
+		if err := authService.ValidateRequest(request); err != nil {
 			// TODO: Return the error as URL parameter
 			//       Will probably need a custom Responder implementation => overwrite ServeError
 			//			 Don't redirect if the redirect_uri isn't valid
@@ -154,15 +154,15 @@ func (r *Redirect) WriteResponse(w http.ResponseWriter, producer runtime.Produce
 	w.WriteHeader(302)
 }
 
-var testConfig = oauth2.ClientConfiguration{
+var testConfig = auth.ClientConfiguration{
 	ClientID:     "solvent",
 	RedirectURI:  "https://www.eldelto.net/solvent",
 	Scopes:       []string{"read", "write"},
 	ClientSecret: "secret",
 }
 
-var authRepository = oauth2Persistence.NewInMemoryRepository()
-var authService = oauth2.NewService(authRepository)
+var authRepository = authPersistence.NewInMemoryRepository()
+var authService = auth.NewService(authRepository)
 
 var authnRepository = authnPersistence.NewInMemoryRepository()
 var authnService = authn.NewService(authnRepository)

@@ -4,7 +4,7 @@ import (
 	"github.com/google/uuid"
 	"net/url"
 
-	"github.com/eldelto/zerberus/authn"
+	"github.com/eldelto/zerberus/internal/authn"
 )
 
 // FakeLoginProvider doesn't actually use any third party identity provider but

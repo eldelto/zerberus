@@ -1,7 +1,7 @@
 package persistence
 
 import (
-	"github.com/eldelto/zerberus/authn"
+	"github.com/eldelto/zerberus/internal/authn"
 )
 
 // InMemoryRepository is an in-memory implementation of authn.Repository.
