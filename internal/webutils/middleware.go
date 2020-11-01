@@ -102,5 +102,7 @@ func redirect(location string, w http.ResponseWriter, r *http.Request) {
 	w.Header().Del("Content-Type") // Remove Content-Type on empty responses
 	w.Header().Add("Location", location)
 	w.Header().Add(ReferrerHeaderKey, r.RequestURI)
+	// TODO: Remove referrer header and pass the original URI via an additional parameter.
+	// Also needs changes in the GET /authenticate endpoint Swagger.
 	w.WriteHeader(302)
 }

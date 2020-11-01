@@ -14,6 +14,7 @@ import (
 	"github.com/eldelto/zerberus/internal/auth"
 	authPersistence "github.com/eldelto/zerberus/internal/auth/persistence"
 	"github.com/eldelto/zerberus/internal/authn"
+	"github.com/eldelto/zerberus/internal/authn/loginprovider"
 	authnPersistence "github.com/eldelto/zerberus/internal/authn/persistence"
 	"github.com/eldelto/zerberus/internal/webutils"
 	"github.com/eldelto/zerberus/restapi/operations"
@@ -28,6 +29,10 @@ func configureFlags(api *operations.ZerberusAPI) {
 
 func configureAPI(api *operations.ZerberusAPI) http.Handler {
 	authRepository.StoreClientConfiguration(testConfig)
+
+	fakeProvider := loginprovider.NewFakeLoginProvider()
+	authnService.RegisterLoginProvider(fakeProvider, "fake-provider")
+	authnService.RegisterLoginProvider(fakeProvider, "fake-provider-2")
 
 	// configure the api here
 	api.ServeError = errors.ServeError
@@ -82,9 +87,18 @@ func configureAPI(api *operations.ZerberusAPI) http.Handler {
 			}
 		}
 
-		// TODO: Pass URL from referrer header to template so it post it to the provider.
+		referrer := params.HTTPRequest.Header.Get(webutils.ReferrerHeaderKey)
+		providers := authnService.LoginProviders()
 
-		return webutils.NewTemplateProvider("assets/templates/authenticate.html", nil)
+		data := struct {
+			RedirectURI string
+			Providers   []string
+		}{
+			RedirectURI: referrer,
+			Providers:   providers,
+		}
+
+		return webutils.NewTemplateProvider("assets/templates/authenticate.html", data)
 	})
 
 	api.OAuth2CreateAuthenticationHandler = o_auth2.CreateAuthenticationHandlerFunc(func(params o_auth2.CreateAuthenticationParams) middleware.Responder {

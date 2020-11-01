@@ -6,6 +6,14 @@
 
   <a href="/v1/fakeProvider">Fake Provider</a>
 
+  <form method="post" action="/v1/authenticate">
+    <input type="hidden" name="redirect_uri" value="{{.RedirectURI}}" />
+
+    {{range $p := .Providers}}
+      <button>{{$p}}</button>
+    {{end}}
+  </form>
+
   </body>
 
 </html>

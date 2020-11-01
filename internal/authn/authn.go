@@ -173,6 +173,18 @@ func (s *Service) ValidateAuthn(sessionID string) error {
 	return nil
 }
 
+// LoginProviders returns a list of keys identifying registered LoginProviders.
+func (s *Service) LoginProviders() []string {
+	keys := make([]string, len(s.loginProviders))
+	i := 0
+	for k := range s.loginProviders {
+		keys[i] = k
+		i++
+	}
+
+	return keys
+}
+
 // RegisterLoginProvider registers the given LoginProvider under the given key.
 // If a LoginProvider for the given key is already registered a ConfigurationError
 // is returned otherwise nil.
